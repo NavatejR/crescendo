@@ -11,9 +11,11 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
-    // `--mode preview` produces a single self-contained HTML file
-    // (all JS/CSS/fonts inlined) for serverless UI previews.
-    ...(mode === "preview" ? [viteSingleFile()] : []),
+    // Inline ALL JS/CSS/fonts into a single index.html for every production
+    // build. The macOS WKWebView (tauri:// protocol) fails to apply external
+    // stylesheets reliably; a self-contained HTML sidesteps that entirely.
+    // `--mode dev-preview` skips inlining for the served multi-file preview.
+    ...(mode === "dev-preview" ? [] : [viteSingleFile()]),
   ],
 
   // Relative base lets the built dist/ run from any static path

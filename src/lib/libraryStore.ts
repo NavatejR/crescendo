@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import type { Album, Track } from "./types";
 import { ALBUMS as MOCK_ALBUMS, TRACKS as MOCK_TRACKS } from "./mockLibrary";
 import { native, isNative, type NativeAlbum, type NativeTrack } from "./native";
@@ -13,6 +14,14 @@ export interface LibraryState {
   refresh: () => Promise<void>;
 }
 
+/** Resolve a backend file path into a URL the webview can load. */
+function artUrl(path: string | null | undefined): string | undefined {
+  // convertFileSrc maps to the platform webview protocol
+  // (asset://localhost/... on macOS, http://asset.localhost/... on Windows)
+  // and only works when the Tauri IPC bridge is present.
+  return path && isNative() ? convertFileSrc(path) : undefined;
+}
+
 /** Convert a DB track into the UI Track view-model. */
 export function toTrack(t: NativeTrack): Track {
   return {
@@ -21,7 +30,7 @@ export function toTrack(t: NativeTrack): Track {
     artist: t.artist,
     albumId: `${t.albumArtist}::${t.album}`,
     albumTitle: t.album,
-    art: t.artPath ? `asset://localhost${encodeURI(t.artPath)}` : undefined,
+    art: artUrl(t.artPath),
     year: t.year,
     trackNo: t.trackNo,
     duration: t.duration,
@@ -40,7 +49,7 @@ export function toAlbum(a: NativeAlbum): Album {
     title: a.title,
     artist: a.artist,
     year: a.year,
-    art: a.artPath ? `asset://localhost${encodeURI(a.artPath)}` : fallbackArt(a.key),
+    art: artUrl(a.artPath) ?? fallbackArt(a.key),
   };
 }
 
