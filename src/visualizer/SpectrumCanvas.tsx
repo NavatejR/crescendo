@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { VERT, FRAGMENTS } from "./shaderSource";
-import { usePlayer } from "../player/store";
+import { spectrum } from "../lib/spectrum";
 
 function hexToNdc(hex: string): [number, number, number] {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
@@ -28,8 +28,8 @@ interface Props {
 
 /**
  * WebGL2 full-viewport fragment-shader visualizer.
- * Simulated spectrum/waveform data flows into two 1px textures until the
- * native engine replaces the simulation via the player store.
+ * Data comes from the shared spectrum singleton — fed by native FFT
+ * events inside the Tauri app, or the browser simulator in preview mode.
  */
 export default function SpectrumCanvas({ style, intensity, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -82,16 +82,17 @@ export default function SpectrumCanvas({ style, intensity, className }: Props) {
     const waveTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, waveTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, waveData);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    for (const _t of [specTex, waveTex]) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
 
     // ---- theme palette ----
     const css = getComputedStyle(document.documentElement);
-    const readHex = (v: string) => v.trim();
-    const accent = hexToNdc(readHex(css.getPropertyValue("--accent") || "#7cc4ff"));
-    const text = hexToNdc(readHex(css.getPropertyValue("--text") || "#f2f2f7"));
+    const accent = hexToNdc(css.getPropertyValue("--accent") || "#7cc4ff");
+    const text = hexToNdc(css.getPropertyValue("--text") || "#f2f2f7");
     const cA = [accent[0] * 0.5, accent[1] * 0.5, accent[2] * 0.5];
     const cB = [accent[0] * 0.5, accent[1] * 0.5, accent[2] * 0.5];
     const cC = [1.0, text[0] * 0.9, text[1] * 0.8];
@@ -116,83 +117,47 @@ export default function SpectrumCanvas({ style, intensity, className }: Props) {
     }
     resize();
 
-    // ---- simulation (until native FFT events arrive) ----
-    let phase = 0;
-    let smBass = 0, smMid = 0, smTre = 0, smEnergy = 0;
-    const smoothSpec = new Float32Array(SPEC_N);
+    let raf = 0;
+    const loop = (now: number) => {
+      resize();
 
-    function simulate(dt: number, playing: boolean) {
-      phase += dt * (playing ? 2.2 : 0.35);
-      const drive = playing ? 1 : 0.12;
+      // upload spectrum bands
+      gl.bindTexture(gl.TEXTURE_2D, specTex);
       for (let i = 0; i < SPEC_N; i++) {
-        const x = i / SPEC_N;
-        // log-ish tilt + dancing humps + per-bin noise
-        const tilt = Math.pow(1 - x, 1.6);
-        const hump =
-          Math.exp(-Math.pow((x - (0.12 + 0.22 * Math.sin(phase * 0.7 + i * 0.35)) ) * 5, 2)) +
-          Math.exp(-Math.pow((x - (0.45 + 0.25 * Math.sin(phase * 0.45 + i * 0.22)) ) * 6, 2));
-        const n = 0.5 + 0.5 * Math.sin(phase * (1.3 + x * 5) + i * 1.7);
-        const target = drive * Math.min(1, (tilt * 0.7 + hump * 0.5) * (0.55 + 0.45 * n) + 0.05);
-        smoothSpec[i] += (target - smoothSpec[i]) * (target > smoothSpec[i] ? 0.5 : 0.12);
-      }
-      const bassT = playing
-        ? Math.min(1, 0.25 + 0.75 * Math.abs(Math.sin(phase * 1.1) * Math.sin(phase * 0.53)))
-        : 0.05;
-      const midT = playing ? 0.3 + 0.4 * Math.abs(Math.sin(phase * 0.8 + 1)) : 0.05;
-      const treT = playing ? 0.15 + 0.3 * Math.abs(Math.sin(phase * 2.3 + 2)) : 0.03;
-      smBass += (bassT - smBass) * 0.15;
-      smMid += (midT - smMid) * 0.15;
-      smTre += (treT - smTre) * 0.15;
-      smEnergy += (playing ? (smBass * 0.6 + smMid * 0.3 + smTre * 0.1) : 0.05 - smEnergy) * 0.1;
-    }
-
-    function uploadTextures() {
-      gl!.bindTexture(gl!.TEXTURE_2D, specTex);
-      for (let i = 0; i < SPEC_N; i++) {
-        const v = Math.min(255, Math.round(smoothSpec[i] * 255));
-        specData[i * 4] = v; specData[i * 4 + 1] = v; specData[i * 4 + 2] = v;
+        const v = Math.min(255, Math.round(spectrum.bands[i] * 255));
+        specData[i * 4] = v;
+        specData[i * 4 + 1] = v;
+        specData[i * 4 + 2] = v;
         specData[i * 4 + 3] = 255;
       }
-      gl!.texSubImage2D(gl!.TEXTURE_2D, 0, 0, 0, SPEC_N, 1, gl!.RGBA, gl!.UNSIGNED_BYTE, specData);
-      gl!.bindTexture(gl!.TEXTURE_2D, waveTex);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, SPEC_N, 1, gl.RGBA, gl.UNSIGNED_BYTE, specData);
+
+      // upload waveform
+      gl.bindTexture(gl.TEXTURE_2D, waveTex);
       for (let i = 0; i < 256; i++) {
-        const x = i / 255;
-        const v =
-          0.5 +
-          0.45 * Math.sin(x * Math.PI * 2 * (1 + smBass * 3) + phase * 2.0) * (0.3 + smBass * 0.7) +
-          0.12 * Math.sin(x * Math.PI * 2 * 7 + phase * 3.7) * smTre;
-        waveData[i * 4] = Math.max(0, Math.min(255, Math.round(v * 255)));
-        waveData[i * 4 + 1] = waveData[i * 4];
-        waveData[i * 4 + 2] = waveData[i * 4];
+        const v = Math.max(0, Math.min(255, Math.round((spectrum.waveform[i] * 0.5 + 0.5) * 255)));
+        waveData[i * 4] = v;
+        waveData[i * 4 + 1] = v;
+        waveData[i * 4 + 2] = v;
         waveData[i * 4 + 3] = 255;
       }
-      gl!.texSubImage2D(gl!.TEXTURE_2D, 0, 0, 0, 256, 1, gl!.RGBA, gl!.UNSIGNED_BYTE, waveData);
-    }
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 1, gl.RGBA, gl.UNSIGNED_BYTE, waveData);
 
-    let raf = 0;
-    let last = performance.now();
-    const loop = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
-      resize();
-      simulate(dt, usePlayer.getState().status === "playing");
-      uploadTextures();
-      gl!.uniform2f(uRes, canvas!.width, canvas!.height);
-      gl!.uniform1f(uTime, now / 1000);
-      gl!.uniform1f(uBass, smBass);
-      gl!.uniform1f(uMid, smMid);
-      gl!.uniform1f(uTreble, smTre);
-      gl!.uniform1f(uEnergy, smEnergy);
-      gl!.uniform1f(uIntensity, intensity);
-      gl!.uniform1f(uActive, usePlayer.getState().status === "playing" ? 1.0 : 0.25);
-      gl!.drawArrays(gl!.TRIANGLES, 0, 3);
+      const active = spectrum.playing ? 1.0 : 0.25;
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, now / 1000);
+      gl.uniform1f(uBass, spectrum.bass);
+      gl.uniform1f(uMid, spectrum.mid);
+      gl.uniform1f(uTreble, spectrum.treble);
+      gl.uniform1f(uEnergy, spectrum.energy);
+      gl.uniform1f(uIntensity, intensity);
+      gl.uniform1f(uActive, active);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
 
-    const onLost = (e: Event) => {
-      e.preventDefault();
-    };
+    const onLost = (e: Event) => e.preventDefault();
     canvas.addEventListener("webglcontextlost", onLost);
 
     return () => {

@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { trackById } from "../lib/mockLibrary";
+import { isNative } from "../lib/env";
+import { native, repeatModeToInt, type EngineStatus } from "../lib/native";
+import { startSimulation, spectrum } from "../lib/spectrum";
 import type { RepeatMode, Track } from "../lib/types";
 
 export type PlayerStatus = "stopped" | "playing" | "paused";
@@ -14,7 +17,7 @@ interface PlayerState {
   muted: boolean;
   shuffle: boolean;
   repeat: RepeatMode;
-  /** Simulated spectrum levels 0..1 (until native FFT events arrive) */
+  /** Simulated spectrum levels (browser mode only) */
   levels: number[];
   bass: number;
   mid: number;
@@ -37,15 +40,47 @@ interface PlayerState {
   tick: (dt: number) => void;
 }
 
-export const usePlayer = create<PlayerState>((set, get) => {
-  const load = (i: number) => {
-    const q = get().queue;
-    if (i < 0 || i >= q.length) return;
-    const t = trackById(q[i]);
-    if (!t) return;
-    set({ index: i, position: 0, duration: t.duration, status: "playing" });
-  };
+let lastSentVolume = -1;
+let lastSentRepeat: RepeatMode | null = null;
+/** Mirror of the track list last sent to the native engine (for duration lookup). */
+let nativeQueueTracks: Track[] = [];
 
+let stopSync: (() => void) | null = null;
+/** Native mode: start polling the engine for position/status. */
+function ensureSync(
+  set: (partial: Partial<PlayerState>) => void,
+  get: () => PlayerState,
+) {
+  if (!isNative() || stopSync) return;
+  let stopped = false;
+  const poll = async () => {
+    if (stopped) return;
+    const s: EngineStatus | null = await native.status();
+    if (s) {
+      const t =
+        s.index >= 0 && s.index < nativeQueueTracks.length
+          ? nativeQueueTracks[s.index]
+          : undefined;
+      set({
+        position: s.position,
+        index: s.index,
+        status: s.status,
+        duration: t?.duration ?? get().duration,
+      });
+    }
+    setTimeout(poll, 250);
+  };
+  poll();
+  stopSync = () => {
+    stopped = true;
+  };
+}
+/** Browser mode: start the simulated FFT feed. */
+function ensureSim() {
+  if (!isNative()) startSimulation();
+}
+
+export const usePlayer = create<PlayerState>((set, get) => {
   return {
     status: "stopped",
     queue: [],
@@ -64,26 +99,67 @@ export const usePlayer = create<PlayerState>((set, get) => {
     playTrackList(tracks, startIdx = 0) {
       if (tracks.length === 0) return;
       const idx = Math.min(Math.max(0, startIdx), tracks.length - 1);
+      const cur = tracks[idx];
       set({
         queue: tracks.map((t) => t.id),
         index: idx,
         position: 0,
-        duration: tracks[idx]?.duration ?? 0,
+        duration: cur.duration ?? 0,
         status: "playing",
       });
+      if (isNative()) {
+        nativeQueueTracks = tracks;
+        native.play(tracks.map((t) => t.path), idx);
+        ensureSync(set, get);
+      } else {
+        ensureSim();
+        spectrum.playing = true;
+      }
     },
 
-    playQueueIndex: (i) => load(i),
+    playQueueIndex: (i) => {
+      const q = get().queue;
+      if (i < 0 || i >= q.length) return;
+      set({ index: i, position: 0, status: "playing" });
+      if (isNative()) {
+        native.play(q, i); // reload queue pointing at the chosen index
+        ensureSync(set, get);
+      } else {
+        const t = trackById(q[i]);
+        set({ duration: t?.duration ?? 0 });
+        ensureSim();
+        spectrum.playing = true;
+      }
+    },
 
     togglePlay: () => {
       const { status, queue } = get();
-      if (status === "playing") set({ status: "paused" });
-      else if (status === "paused") set({ status: "playing" });
-      else if (queue.length > 0) set({ status: "playing" });
+      if (isNative()) {
+        native.toggle();
+        ensureSync(set, get);
+        set({ status: status === "playing" ? "paused" : status === "paused" ? "playing" : status });
+        return;
+      }
+      if (status === "playing") {
+        set({ status: "paused" });
+        spectrum.playing = false;
+      } else if (status === "paused") {
+        set({ status: "playing" });
+        spectrum.playing = true;
+      } else if (queue.length > 0) {
+        set({ status: "playing" });
+        spectrum.playing = true;
+      }
     },
 
     next: () => {
       const s = get();
+      if (isNative()) {
+        native.next();
+        ensureSync(set, get);
+        set({ position: 0 });
+        return;
+      }
       if (s.repeat === "one" && s.status !== "stopped") {
         set({ position: 0, status: "playing" });
         return;
@@ -93,38 +169,59 @@ export const usePlayer = create<PlayerState>((set, get) => {
         if (s.repeat === "all") i = 0;
         else {
           set({ status: "stopped", position: 0 });
+          spectrum.playing = false;
           return;
         }
       }
-      load(i);
+      const t = trackById(s.queue[i]);
+      set({ index: i, position: 0, duration: t?.duration ?? 0, status: "playing" });
     },
 
     prev: () => {
       const s = get();
+      if (isNative()) {
+        native.prev();
+        ensureSync(set, get);
+        return;
+      }
       if (s.position > 3) {
         set({ position: 0 });
         return;
       }
       let i = s.index - 1;
       if (i < 0) i = s.repeat === "all" ? s.queue.length - 1 : 0;
-      load(i);
+      const t = trackById(s.queue[i]);
+      set({ index: i, position: 0, duration: t?.duration ?? 0, status: "playing" });
     },
 
     seek: (sec) => {
       const d = get().duration;
-      set({ position: Math.min(Math.max(0, sec), d || 0) });
+      const p = Math.min(Math.max(0, sec), d || 0);
+      set({ position: p });
+      if (isNative()) native.seek(p);
     },
 
-    setVolume: (v) => set({ volume: Math.min(1, Math.max(0, v)), muted: false }),
+    setVolume: (v) => {
+      const vol = Math.min(1, Math.max(0, v));
+      set({ volume: vol, muted: false });
+      if (isNative() && Math.abs(vol - lastSentVolume) > 0.001) {
+        lastSentVolume = vol;
+        native.setVolume(vol);
+      }
+    },
 
-    toggleMute: () => set({ muted: !get().muted }),
+    toggleMute: () => {
+      const { muted, volume } = get();
+      set({ muted: !muted });
+      if (isNative()) native.setVolume(muted ? volume : 0);
+      else spectrum.playing = get().status === "playing";
+    },
 
     toggleShuffle: () => {
       const { shuffle, queue, index } = get();
       if (shuffle) {
         set({ shuffle: false });
       } else {
-        // Keep played order up to current index; shuffle everything after it.
         const head = queue.slice(0, index + 1);
         const rest = queue.slice(index + 1);
         for (let i = rest.length - 1; i > 0; i--) {
@@ -138,7 +235,12 @@ export const usePlayer = create<PlayerState>((set, get) => {
     cycleRepeat: () => {
       const order: RepeatMode[] = ["off", "all", "one"];
       const cur = get().repeat;
-      set({ repeat: order[(order.indexOf(cur) + 1) % order.length] });
+      const nextMode = order[(order.indexOf(cur) + 1) % order.length];
+      set({ repeat: nextMode });
+      if (isNative() && nextMode !== lastSentRepeat) {
+        lastSentRepeat = nextMode;
+        native.setRepeat(repeatModeToInt(nextMode));
+      }
     },
 
     playNextInQueue: (track) => {
@@ -150,7 +252,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
 
     removeFromQueue: (i) => {
       const { queue, index } = get();
-      if (i === index) return; // never remove the playing row
+      if (i === index) return;
       const q = queue.filter((_, idx) => idx !== i);
       set({ queue: q, index: i < index ? index - 1 : index });
     },

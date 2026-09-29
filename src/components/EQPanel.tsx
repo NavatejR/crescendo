@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Power } from "lucide-react";
+import { native } from "../lib/native";
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
@@ -35,6 +36,11 @@ export default function EQPanel({ onClose }: { onClose: () => void }) {
     setGains(g);
     setPreset("Custom");
   }
+
+  // Push every change to the native DSP (no-op in browser mode).
+  useEffect(() => {
+    native.setEq(enabled, preamp, gains);
+  }, [enabled, preamp, gains]);
 
   return (
     <AnimatePresence>

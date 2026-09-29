@@ -8,6 +8,9 @@ import Settings from "./components/Settings";
 import Library from "./components/Library";
 import EQPanel from "./components/EQPanel";
 import { usePlayer } from "./player/store";
+import { useLibrary } from "./lib/libraryStore";
+import { isNative } from "./lib/env";
+import { spectrum } from "./lib/spectrum";
 
 export type ViewId = "albums" | "artists" | "tracks" | "folders" | "playlists" | "eq";
 
@@ -16,9 +19,58 @@ export default function App() {
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showEQ, setShowEQ] = useState(false);
+  const [scan, setScan] = useState<{ done: number; total: number } | null>(null);
 
-  // Playback clock (simulated engine until native audio lands)
+  // Load library (native DB or mock) once
   useEffect(() => {
+    useLibrary.getState().refresh();
+  }, []);
+
+  // Native spectrum + scan events; browser simulation otherwise
+  useEffect(() => {
+    if (!isNative()) return;
+    let unlisten: (() => void) | null = null;
+    (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      const offA = await listen<{
+        bands: number[]; waveform: number[]; bass: number; mid: number; treble: number; energy: number;
+      }>("spectrum", (e) => {
+        const p = e.payload;
+        for (let i = 0; i < spectrum.bands.length && i < p.bands.length; i++) {
+          spectrum.bands[i] = p.bands[i];
+        }
+        for (let i = 0; i < spectrum.waveform.length && i < p.waveform.length; i++) {
+          spectrum.waveform[i] = p.waveform[i];
+        }
+        spectrum.bass = p.bass;
+        spectrum.mid = p.mid;
+        spectrum.treble = p.treble;
+        spectrum.energy = p.energy;
+        spectrum.playing = usePlayer.getState().status === "playing";
+      });
+      const offB = await listen<[number, number]>("scan:progress", (e) => {
+        setScan({ done: e.payload[0], total: e.payload[1] });
+      });
+      const offC = await listen("scan:done", () => {
+        setScan(null);
+        useLibrary.getState().refresh();
+      });
+      const offD = await listen<string>("scan:error", (e) => {
+        console.error("scan error:", e.payload);
+        setScan(null);
+      });
+      unlisten = () => { offA(); offB(); offC(); offD(); };
+    })();
+    return () => unlisten?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Scan completion also refreshes; keep scan progress listener unmount-safe
+  useEffect(() => () => { /* listeners cleaned above */ }, []);
+
+  // Playback clock (browser mode only; native uses engine polling)
+  useEffect(() => {
+    if (isNative()) return;
     let last = performance.now();
     let raf = 0;
     const loop = (now: number) => {
@@ -53,8 +105,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const macOffset = isNative() && navigator.userAgent.includes("Macintosh");
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${macOffset ? "titlebar-mac" : ""}`}>
       <TitleBar
         onOpenSettings={() => setShowSettings(true)}
         onToggleNowPlaying={() => setShowNowPlaying((v) => !v)}
@@ -62,6 +116,11 @@ export default function App() {
       <div className="app-body">
         <Sidebar view={view} onView={setView} />
         <main className="app-main">
+          {scan && (
+            <div className="scan-bar">
+              Scanning library… {scan.done}/{scan.total}
+            </div>
+          )}
           <Library view={view} />
         </main>
       </div>

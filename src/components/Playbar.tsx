@@ -4,7 +4,8 @@ import {
   Volume2, VolumeX, Maximize2, SlidersHorizontal, Heart,
 } from "lucide-react";
 import { usePlayer } from "../player/store";
-import { albumById, trackById, formatTime } from "../lib/mockLibrary";
+import { formatTime } from "../lib/mockLibrary";
+import { useTrackById, useAlbumById } from "../lib/libraryStore";
 import MiniOrb from "./MiniOrb";
 
 export default function Playbar({
@@ -21,7 +22,9 @@ export default function Playbar({
     toggleMute, toggleShuffle, cycleRepeat,
   } = usePlayer();
 
-  const track = index >= 0 && index < queue.length ? trackById(queue[index]) : undefined;
+  const queuedId = index >= 0 && index < queue.length ? queue[index] : undefined;
+  const track = useTrackById(queuedId);
+  const album = useAlbumById(track?.albumId);
 
   function onSeek(e: React.MouseEvent) {
     const el = barRef.current;
@@ -36,7 +39,7 @@ export default function Playbar({
       <div className="pb-left">
         <div
           className={`pb-art ${track ? "" : "pb-art-empty"}`}
-          style={{ background: track ? albumById(track.albumId).art : undefined }}
+          style={{ background: album?.art ?? track?.art ?? undefined }}
           onClick={onExpand}
           role="button"
         >
@@ -45,7 +48,7 @@ export default function Playbar({
         <div className="pb-meta">
           <span className="pb-title">{track?.title ?? "Nothing playing"}</span>
           <span className="pb-artist text-dim">
-            {track ? `${track.artist} · ${albumById(track.albumId).title}` : "Pick a track to begin"}
+            {track ? `${track.artist} · ${album?.title ?? track.albumTitle ?? ""}` : "Pick a track to begin"}
           </span>
         </div>
         <button className="icon-btn" title="Favorite"><Heart size={15} /></button>

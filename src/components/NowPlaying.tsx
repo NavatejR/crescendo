@@ -5,7 +5,8 @@ import {
   Volume2, ChevronDown, ListMusic, X, Disc3,
 } from "lucide-react";
 import { usePlayer } from "../player/store";
-import { albumById, trackById, formatTime } from "../lib/mockLibrary";
+import { formatTime } from "../lib/mockLibrary";
+import { useTrackById, useAlbumById, useLibrary } from "../lib/libraryStore";
 import { useUI } from "../lib/uiStore";
 import SpectrumCanvas from "../visualizer/SpectrumCanvas";
 
@@ -17,8 +18,10 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
   } = usePlayer();
   const { vizStyle, vizIntensity, setVizStyle, setVizIntensity } = useUI();
 
-  const track = index >= 0 && index < queue.length ? trackById(queue[index]) : undefined;
-  const album = track ? albumById(track.albumId) : undefined;
+  const queuedId = index >= 0 && index < queue.length ? queue[index] : undefined;
+  const track = useTrackById(queuedId);
+  const album = useAlbumById(track?.albumId);
+  const allTracks = useLibrary((s) => s.tracks);
   const progress = duration ? position / duration : 0;
 
   return (
@@ -53,7 +56,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
       <div className="np-stage">
         <motion.div
           className={`np-art ${status === "playing" ? "np-art-playing" : ""}`}
-          style={{ background: album?.art }}
+          style={{ background: album?.art ?? track?.art ?? "var(--surface-2)" }}
           layout
         >
           <div className="np-art-orb" />
@@ -68,7 +71,9 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
         <div className="np-info">
           <h1 className="np-title">{track?.title ?? "Nothing playing"}</h1>
           <p className="np-artist text-dim">
-            {track ? `${track.artist} — ${album?.title} · ${album?.year}` : "Choose something from your library"}
+            {track
+              ? `${track.artist} — ${album?.title ?? track.albumTitle ?? ""}${album?.year ? ` · ${album.year}` : track.year ? ` · ${track.year}` : ""}`
+              : "Choose something from your library"}
           </p>
           <div className="np-format text-faint">
             <Disc3 size={12} />
@@ -144,7 +149,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
             </div>
             <div className="np-queue-list">
               {queue.map((id, i) => {
-                const t = trackById(id);
+                const t = allTracks.find((x) => x.id === id);
                 if (!t) return null;
                 return (
                   <button

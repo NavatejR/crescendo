@@ -3,6 +3,11 @@ export interface Track {
   title: string;
   artist: string;
   albumId: string;
+  /** Display album title (native mode; mock uses albumId lookup) */
+  albumTitle?: string;
+  /** Ready-to-use artwork URL (native asset) — fallback is generated art */
+  art?: string;
+  year?: number;
   trackNo: number;
   duration: number; // seconds
   path: string;
@@ -18,7 +23,7 @@ export interface Album {
   title: string;
   artist: string;
   year: number;
-  /** CSS gradient used as generated cover art until native artwork lands */
+  /** CSS gradient or artwork URL used as cover */
   art: string;
 }
 
