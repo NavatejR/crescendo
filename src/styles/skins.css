@@ -1,0 +1,107 @@
+/* ==========================================================================
+   SKINS — identity axis: color palettes + typography.
+   [data-skin="…"] on <html>.
+   ========================================================================== */
+
+/* ---- Material You — dynamic tonal palette, Roboto Flex ---- */
+[data-skin="material"] {
+  --font-sans: "Roboto Flex Variable", "Inter Variable", sans-serif;
+  --font-display: "Roboto Flex Variable", var(--font-sans);
+  --tracking-display: -0.01em;
+  --bg: #131318;
+  --bg-rgb: 19 19 24;
+  --bg-elev: #1d1d24;
+  --bg-elev-rgb: 29 29 36;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 255 255 255;
+  --text: #e4e2ec;
+  --text-dim: #a3a1b0;
+  --text-faint: #74727f;
+  --outline: 255 255 255;
+  --accent: #a8c8ff;
+  --accent-rgb: 168 200 255;
+  --accent-contrast: #0d2c5e;
+}
+
+/* ---- NothingOS — monochrome, dot-matrix, geometric mono display ---- */
+[data-skin="nothing"] {
+  --font-sans: "Inter Variable", sans-serif;
+  --font-display: "Space Grotesk Variable", monospace;
+  --font-mono: "Space Grotesk Variable", monospace;
+  --tracking-display: 0.04em;
+  --bg: #0a0a0a;
+  --bg-rgb: 10 10 10;
+  --bg-elev: #111111;
+  --bg-elev-rgb: 17 17 17;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 255 255 255;
+  --text: #f5f5f5;
+  --text-dim: #9b9b9b;
+  --text-faint: #5c5c5c;
+  --outline: 255 255 255;
+  --accent: #ffffff;
+  --accent-rgb: 255 255 255;
+  --accent-contrast: #0a0a0a;
+  --dot-color: 255 255 255;
+  --dot-strength: 0.05;
+}
+
+/* ---- Windows 11 — Mica neutrals, Segoe-like humanist sans ---- */
+[data-skin="windows"] {
+  --font-sans: "Nunito Sans Variable", "Segoe UI Variable", "Segoe UI", sans-serif;
+  --font-display: "Nunito Sans Variable", var(--font-sans);
+  --tracking-display: -0.01em;
+  --bg: #1c1e26;
+  --bg-rgb: 28 30 38;
+  --bg-elev: #242733;
+  --bg-elev-rgb: 36 39 51;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 255 255 255;
+  --text: #eef0f6;
+  --text-dim: #a8adbd;
+  --text-faint: #6f7484;
+  --outline: 255 255 255;
+  --accent: #6cb8f6;
+  --accent-rgb: 108 184 246;
+  --accent-contrast: #0a3050;
+}
+
+/* ---- One UI — Samsung deep blacks + electric blue, rounded face ---- */
+[data-skin="oneui"] {
+  --font-sans: "Outfit Variable", "Inter Variable", sans-serif;
+  --font-display: "Outfit Variable", var(--font-sans);
+  --tracking-display: -0.015em;
+  --bg: #0c0e12;
+  --bg-rgb: 12 14 18;
+  --bg-elev: #171a21;
+  --bg-elev-rgb: 23 26 33;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 255 255 255;
+  --text: #eff1f6;
+  --text-dim: #9aa1b2;
+  --text-faint: #5f6675;
+  --outline: 255 255 255;
+  --accent: #4d9fff;
+  --accent-rgb: 77 159 255;
+  --accent-contrast: #04203f;
+}
+
+/* ---- Liquid Glass — translucent chromatic, showy gradient text ---- */
+[data-skin="liquid"] {
+  --font-sans: "Outfit Variable", "Inter Variable", sans-serif;
+  --font-display: "Outfit Variable", var(--font-sans);
+  --tracking-display: -0.025em;
+  --bg: #0b0d16;
+  --bg-rgb: 11 13 22;
+  --bg-elev: #141a2c;
+  --bg-elev-rgb: 20 26 44;
+  --surface-rgb: 255 255 255;
+  --surface-2-rgb: 190 205 255;
+  --text: #f0f2fb;
+  --text-dim: #a7add2;
+  --text-faint: #6a6f92;
+  --outline: 210 220 255;
+  --accent: #9db8ff;
+  --accent-rgb: 157 184 255;
+  --accent-contrast: #101c46;
+}
