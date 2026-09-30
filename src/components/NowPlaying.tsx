@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { usePlayer } from "../player/store";
 import { formatTime } from "../lib/mockLibrary";
-import { useTrackById, useAlbumById, useLibrary } from "../lib/libraryStore";
+import { useTrackById, useAlbumById, useLibrary, isArtUrl } from "../lib/libraryStore";
 import { useUI } from "../lib/uiStore";
 import SpectrumCanvas from "../visualizer/SpectrumCanvas";
 
@@ -22,6 +22,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const track = useTrackById(queuedId);
   const album = useAlbumById(track?.albumId);
   const allTracks = useLibrary((s) => s.tracks);
+  const art = album?.art ?? track?.art;
   const progress = duration ? position / duration : 0;
 
   return (
@@ -56,9 +57,10 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
       <div className="np-stage">
         <motion.div
           className={`np-art ${status === "playing" ? "np-art-playing" : ""}`}
-          style={{ background: album?.art ?? track?.art ?? "var(--surface-2)" }}
+          style={{ background: isArtUrl(art) ? undefined : (art ?? "var(--surface-2)") }}
           layout
         >
+          {isArtUrl(art) && <img src={art} alt="" className="np-art-img" draggable={false} />}
           <div className="np-art-orb" />
           {track?.lossless && (
             <span className="np-lossless">

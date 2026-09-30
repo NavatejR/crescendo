@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import type { ViewId } from "../App";
 import { formatTime } from "../lib/mockLibrary";
-import { useLibrary } from "../lib/libraryStore";
+import { useLibrary, isArtUrl } from "../lib/libraryStore";
 import { native } from "../lib/native";
 import { usePlayer } from "../player/store";
 import type { Album, Track } from "../lib/types";
@@ -140,8 +140,8 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
             transition={{ delay: Math.min(i * 0.03, 0.4), type: "spring", stiffness: 260, damping: 24 }}
             whileHover={{ y: -4 }}
           >
-            <div className="album-art" style={{ background: al.art }}>
-              {al.art.startsWith("asset://") && (
+            <div className="album-art" style={{ background: isArtUrl(al.art) ? undefined : al.art }}>
+              {isArtUrl(al.art) && (
                 <img src={al.art} alt="" className="album-art-img" draggable={false} />
               )}
               <button className="album-play" onClick={() => onPlay(tracks)} title={`Play ${al.title}`}>
@@ -357,9 +357,13 @@ function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void 
               onDoubleClick={() => onPlay(tracks)}
             >
               <div className="pl-art">
-                {tracks.slice(0, 4).map((t) => (
-                  <div key={t.id} style={{ background: t.art ?? "var(--surface-2)" }} />
-                ))}
+                {tracks.slice(0, 4).map((t, i) =>
+                  isArtUrl(t.art) ? (
+                    <img key={t.id} src={t.art} alt="" className="pl-art-img" draggable={false} />
+                  ) : (
+                    <div key={t.id ?? i} style={{ background: t.art ?? "var(--surface-2)" }} />
+                  ),
+                )}
               </div>
               <span className="pl-name">{pl.name}</span>
               <span className="text-faint">{pl.trackIds.length} tracks</span>

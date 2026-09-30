@@ -22,6 +22,15 @@ function artUrl(path: string | null | undefined): string | undefined {
   return path && isNative() ? convertFileSrc(path) : undefined;
 }
 
+/**
+ * True when an art value is a loadable image URL (asset://, http(s)://)
+ * rather than a CSS paint value (gradient). Covers must render URL art as
+ * an <img> overlay; gradient art goes on `background`.
+ */
+export function isArtUrl(art: string | undefined | null): art is string {
+  return !!art && /^(asset|https?):/i.test(art);
+}
+
 /** Convert a DB track into the UI Track view-model. */
 export function toTrack(t: NativeTrack): Track {
   return {

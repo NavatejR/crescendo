@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { usePlayer } from "../player/store";
 import { formatTime } from "../lib/mockLibrary";
-import { useTrackById, useAlbumById } from "../lib/libraryStore";
+import { useTrackById, useAlbumById, isArtUrl } from "../lib/libraryStore";
 import MiniOrb from "./MiniOrb";
 
 export default function Playbar({
@@ -25,6 +25,7 @@ export default function Playbar({
   const queuedId = index >= 0 && index < queue.length ? queue[index] : undefined;
   const track = useTrackById(queuedId);
   const album = useAlbumById(track?.albumId);
+  const art = album?.art ?? track?.art;
 
   function onSeek(e: React.MouseEvent) {
     const el = barRef.current;
@@ -39,10 +40,11 @@ export default function Playbar({
       <div className="pb-left">
         <div
           className={`pb-art ${track ? "" : "pb-art-empty"}`}
-          style={{ background: album?.art ?? track?.art ?? undefined }}
+          style={{ background: isArtUrl(art) ? undefined : art }}
           onClick={onExpand}
           role="button"
         >
+          {isArtUrl(art) && <img src={art} alt="" className="pb-art-img" draggable={false} />}
           {status === "playing" && <div className="pb-art-sheen" />}
         </div>
         <div className="pb-meta">
