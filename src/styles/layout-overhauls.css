@@ -323,19 +323,32 @@
 }
 
 /* ==========================================================================
-   BRUTALISM — boxed nav slabs, loud bordered blocks, squared command bar
+   BRUTALISM — spacious ink-on-bone grid, exposed structure, one loud color
+   used only where it means something. Generous whitespace is part of the
+   craft: brutalism is bold because it is sparse, not because it is loud.
    ========================================================================== */
+[data-overhaul="brutal"] .app-body {
+  grid-template-columns: 240px 1fr;
+}
+[data-overhaul="brutal"] .app-main {
+  padding: 14px 40px 44px;
+}
+[data-overhaul="brutal"] .sidebar {
+  padding: 18px 14px;
+}
 [data-overhaul="brutal"] .side-item {
   border: var(--border-w) solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-s);
-  margin-bottom: 6px;
-  font-weight: 750;
+  background: transparent;
+  border-radius: 0;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.09em;
   font-size: 12px;
 }
 [data-overhaul="brutal"] .side-item:hover {
+  background: var(--surface);
   transform: translate(-2px, -2px);
   box-shadow: var(--hard-shadow);
 }
@@ -343,30 +356,52 @@
   background: var(--accent);
   color: var(--text-on-accent);
   transform: translate(-2px, -2px);
-  box-shadow: var(--hard-shadow);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 0.9);
 }
 [data-overhaul="brutal"] .sidebar-foot-dots {
   border: var(--border-w) solid var(--border);
+  border-radius: 0;
+}
+
+/* Albums: a ruled, breathing grid — cards are plates on a page */
+[data-overhaul="brutal"] .lib-head h1,
+[data-overhaul="brutal"] .home-head h1 {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid rgb(var(--outline) / 0.75);
+  padding-bottom: 12px;
+}
+[data-overhaul="brutal"] .album-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 26px 22px;
+  padding-top: 8px;
 }
 [data-overhaul="brutal"] .album-card {
   border: var(--border-w) solid var(--border);
   background: var(--surface);
-  padding: 10px;
+  padding: 12px 12px 14px;
+  border-radius: 0;
 }
 [data-overhaul="brutal"] .album-card:hover {
   transform: translate(-3px, -3px);
-  box-shadow: 5px 5px 0 rgb(var(--accent-rgb) / 0.9);
+  box-shadow: var(--shadow-pop);
   background: var(--surface-2);
+}
+[data-overhaul="brutal"] .album-art {
+  border-radius: 0;
 }
 [data-overhaul="brutal"] .album-title {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 12px;
+  margin-top: 10px;
 }
-[data-overhaul="brutal"] .album-grid {
-  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+[data-overhaul="brutal"] .album-play {
+  border-radius: 0;
 }
+
+/* Transport: a squared slab, quietly confident */
 [data-overhaul="brutal"] .playbar {
   margin: 0;
   border-radius: 0;
@@ -375,6 +410,7 @@
   border-top: var(--border-w) solid var(--border);
   background: var(--bg-elev);
   min-height: 86px;
+  padding: 10px 22px;
 }
 [data-overhaul="brutal"] .pb-play {
   border-radius: 0;
@@ -389,7 +425,7 @@
 }
 [data-overhaul="brutal"] .brand-name {
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   font-size: 13px;
 }
 [data-overhaul="brutal"] .np-play {
@@ -401,14 +437,22 @@
   border-radius: 0;
   text-transform: uppercase;
 }
-[data-overhaul="brutal"] .home-chip,
+[data-overhaul="brutal"] .home-chip {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 11.5px;
+}
 [data-overhaul="brutal"] .home-recent-card {
-  border-radius: var(--radius-s);
+  border-radius: 0;
 }
 [data-overhaul="brutal"] .home-sec-title {
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   font-size: 13px;
+}
+[data-overhaul="brutal"] .home-stats b {
+  color: var(--text);
 }
 
 /* ==========================================================================

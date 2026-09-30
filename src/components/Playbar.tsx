@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { usePlayer } from "../player/store";
 import { formatTime } from "../lib/mockLibrary";
-import { useTrackById, useAlbumById, isArtUrl } from "../lib/libraryStore";
+import { useTrackById, useAlbumById, isArtUrl, artBackground } from "../lib/libraryStore";
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
 import MiniOrb from "./MiniOrb";
@@ -39,6 +39,7 @@ export default function Playbar({
   const track = useTrackById(queuedId);
   const album = useAlbumById(track?.albumId);
   const art = album?.art ?? track?.art;
+  const artBase = artBackground(art, album?.artPalette ?? track?.artPalette);
 
   function onSeek(e: React.MouseEvent) {
     const el = barRef.current;
@@ -53,7 +54,7 @@ export default function Playbar({
       <div className="pb-left">
         <div
           className={`pb-art ${track ? "" : "pb-art-empty"}`}
-          style={{ background: isArtUrl(art) ? undefined : art }}
+          style={{ background: artBase }}
           onClick={onExpand}
           role="button"
         >

@@ -5,9 +5,9 @@ import { usePlayer } from "../player/store";
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
 import { formatTime } from "../lib/mockLibrary";
-import { useTrackById, useAlbumById, useLibrary, isArtUrl } from "../lib/libraryStore";
+import { useTrackById, useAlbumById, useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
 import { useUI } from "../lib/uiStore";
-import OrbViz from "../visualizer/OrbViz";
+import LavaGradient from "./LavaGradient";
 
 export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const [queueOpen, setQueueOpen] = useState(false);
@@ -35,18 +35,28 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const album = useAlbumById(track?.albumId);
   const allTracks = useLibrary((s) => s.tracks);
   const art = album?.art ?? track?.art;
+  const palette = album?.artPalette ?? track?.artPalette;
   const progress = duration ? position / duration : 0;
+
+  // Palette-derived gradient shown beneath cover art (and as its fallback).
+  const artBase = artBackground(art, palette);
 
   return (
     <motion.div
-      className="np"
+      className="np np-opaque"
       initial={{ opacity: 0, scale: 1.04 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.03 }}
       transition={{ type: "spring", stiffness: 260, damping: 30 }}
     >
-      {/* Orbkit shader backdrop — orb follows the active overhaul */}
-      <OrbViz intensity={vizIntensity} className="np-viz" />
+      {/* Lava-lamp backdrop built from the album's cover palette */}
+      <LavaGradient
+        palette={palette}
+        seed={album?.id ?? "np"}
+        intensity={vizIntensity}
+        active={status === "playing"}
+        className="np-viz"
+      />
 
       <div className="np-top">
         <button className="icon-btn" onClick={onClose} title="Close (⌘F)">
@@ -69,7 +79,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
       <div className="np-stage">
         <motion.div
           className={`np-art ${status === "playing" ? "np-art-playing" : ""}`}
-          style={{ background: isArtUrl(art) ? undefined : (art ?? "var(--surface-2)") }}
+          style={{ background: isArtUrl(art) ? artBase : (art ?? artBase) }}
           layout
         >
           {isArtUrl(art) ? (

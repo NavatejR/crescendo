@@ -106,9 +106,8 @@
   --accent-contrast: #101c46;
 }
 
-/* ---------- Per-skin icon character ---------- */
-/* Each skin re-weights and shapes the lucide icon set via SVG presentation
-   attributes on [data-icon-skin] containers (set on .app-shell). */
+/* ---------- Per-skin icon character ----------
+   Meaning is fixed by iconSet.ts; skins only re-shape stroke rendering. */
 [data-icon-skin="nothing"] svg {
   stroke-width: 1.5;
   stroke-linecap: square;
@@ -118,7 +117,7 @@
   stroke-width: 1.6;
 }
 [data-icon-skin="oneui"] svg {
-  stroke-width: 2.2;
+  stroke-width: 1.8;
 }
 [data-icon-skin="material"] svg {
   stroke-width: 2;

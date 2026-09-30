@@ -38,23 +38,23 @@
   --density: 1;
 }
 
-/* ---- Brutalism — raw borders, offset hard shadows, zero blur ---- */
+/* ---- Brutalism — ink & bone, black offset shadows, zero blur.
+   Accent is reserved for the active state; structure carries the style. ---- */
 [data-overhaul="brutal"] {
-  --radius-s: 2px;
-  --radius-m: 4px;
-  --radius-l: 6px;
-  --border-w: 2px;
-  --border-alpha: 0.9;
-  --surface-alpha: 0.04;
+  --outline: 232 227 216;        /* bone, not pure white */
+  --border-w: 1.5px;
+  --border-alpha: 0.5;
+  --surface-alpha: 0.045;
   --surface-2-alpha: 0.08;
   --blur: 0px;
   --blur-saturate: 100%;
-  --shadow-rest: 4px 4px 0 rgb(var(--outline) / 0.85);
-  --shadow-pop: 7px 7px 0 rgb(var(--accent-rgb) / 0.9);
-  --hard-shadow: 4px 4px 0 rgb(var(--outline) / 0.85);
+  --shadow-rest: 3px 3px 0 rgb(0 0 0 / 0.85);
+  --shadow-pop: 6px 6px 0 rgb(0 0 0 / 0.9);
+  --hard-shadow: 3px 3px 0 rgb(0 0 0 / 0.85);
   --sheen: none;
   --density: 1.05;
-  --tracking-display: 0.06em;
+  --tracking-display: 0.08em;
+  --type-scale: 1.05;
 }
 
 /* ---- Maximalism — oversized radii, dense stages, big type ---- */

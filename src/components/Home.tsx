@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "motion/react";
-import { useLibrary, isArtUrl } from "../lib/libraryStore";
+import { useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
 import { usePlayer } from "../player/store";
 import { useTheme } from "../theme/store";
 import { useIcon } from "../theme/iconSet";
@@ -97,7 +97,7 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
               <motion.button
                 key={t.id}
                 className="home-recent-card"
-                style={{ background: isArtUrl(t.art) ? undefined : t.art ?? "var(--surface-2)" }}
+                style={{ background: artBackground(t.art, t.artPalette) }}
                 onClick={() => playTrackList(recent, i)}
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -168,7 +168,7 @@ function AlbumCard({
       transition={{ delay: Math.min(index * 0.03, 0.4), type: "spring", stiffness: 260, damping: 24 }}
       whileHover={{ y: -4 }}
     >
-      <div className="album-art" style={{ background: isArtUrl(album.art) ? undefined : album.art }}>
+      <div className="album-art" style={{ background: artBackground(album.art, album.artPalette) }}>
         {isArtUrl(album.art) && <img src={album.art} alt="" className="album-art-img" draggable={false} />}
         <button className="album-play" onClick={() => onPlay(tracks)} title={`Play ${album.title}`}>
           <Iplay size={16} style={{ marginLeft: 2 }} />

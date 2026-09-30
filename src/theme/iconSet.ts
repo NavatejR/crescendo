@@ -1,23 +1,21 @@
 import type { ComponentType, CSSProperties } from "react";
 import {
-  House, LayoutDashboard, CircleDot, Sparkle,
-  Disc, Disc3, Orbit, Aperture, CircleDashed,
-  Users, Shapes, UsersRound, Layers, Gem,
+  House,
+  Disc, Disc3, Orbit, CircleDot,
+  Users, UsersRound,
   Music, Music2, Music4, AudioWaveform, AudioLines,
-  Folder, Square, Compass, Radio,
-  ListMusic, List, ListEnd, ListStart, Spline,
-  SlidersHorizontal, SlidersVertical, Gauge, Command, Activity,
-  Search, TextSearch, Sparkles,
+  Folder, FolderOpen, RefreshCw, RefreshCcw,
+  ListMusic, List,
+  SlidersHorizontal, SlidersVertical,
+  Search, Sparkles,
   Settings, Settings2,
-  Maximize2, Expand, Scaling,
-  Play, CirclePlay, Pause, CirclePause,
-  SkipBack, SkipForward, StepBack, StepForward, Rewind, FastForward,
-  Shuffle, ArrowLeftRight, Dices, RotateCw,
-  Repeat, Repeat1,
+  Maximize2, Expand,
+  Play, Pause, CirclePlay, CirclePause,
+  SkipBack, SkipForward, StepBack, StepForward,
+  Shuffle, Repeat, Repeat1,
   Volume1, Volume2, VolumeX,
-  Heart, Star, Flame, Droplet,
-  X, Power, Plus,
-  Clock, Clock3, FolderOpen, RefreshCw, RefreshCcw,
+  Heart, X, Power, Plus,
+  Clock, Clock3,
   Palette, Info, Check,
 } from "lucide-react";
 import type { SkinId } from "./skins";
@@ -43,16 +41,15 @@ export type IconName =
   | "palette" | "sparkles" | "info" | "check" | "disc";
 
 /**
- * Each skin ships its own icon character:
- *  - material  → rounded, familiar (classic lucide shapes)
- *  - nothing   → geometric/technical mono (circles, dots, squares)
- *  - windows   → fluent-style straight arrows and gauges
- *  - oneui     → minimal thin glyphs
- *  - liquid    → expressive, ornamental forms
+ * Per-skin icon sets. Every variant stays semantically true to its action —
+ * skins differ in *character* (rounded vs geometric, frames vs bare glyphs),
+ * never in meaning. Stroke weight per skin is applied in skins.css.
  */
 const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
+  /* Material You: rounded, familiar shapes */
   material: {
-    home: House, albums: Disc3, artists: Users, tracks: Music2, folders: Folder, playlists: ListMusic,
+    home: House,
+    albums: Disc3, artists: Users, tracks: Music2, folders: Folder, playlists: ListMusic,
     eq: SlidersHorizontal, search: Search, settings: Settings, expand: Maximize2,
     play: Play, pause: Pause, prev: SkipBack, next: SkipForward,
     shuffle: Shuffle, repeat: Repeat, repeat1: Repeat1,
@@ -60,41 +57,53 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
     rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Disc3,
   },
+
+  /* NothingOS: geometric, framed, technical */
   nothing: {
-    home: Square, albums: Orbit, artists: Shapes, tracks: AudioWaveform, folders: Square, playlists: List,
-    eq: Gauge, search: TextSearch, settings: Settings2, expand: Expand,
+    home: House,
+    albums: Orbit, artists: Users, tracks: AudioWaveform, folders: Folder, playlists: List,
+    eq: SlidersVertical, search: Search, settings: Settings2, expand: Expand,
     play: CirclePlay, pause: CirclePause, prev: StepBack, next: StepForward,
-    shuffle: ArrowLeftRight, repeat: RotateCw, repeat1: Repeat1,
-    volume: Volume1, mute: VolumeX, favorite: Star, queue: ListEnd,
+    shuffle: Shuffle, repeat: Repeat, repeat1: Repeat1,
+    volume: Volume1, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock, folderOpen: FolderOpen,
     rescan: RefreshCcw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Orbit,
   },
+
+  /* Windows 11: Fluent-style, slightly condensed */
   windows: {
-    home: LayoutDashboard, albums: Disc, artists: UsersRound, tracks: Music, folders: Folder, playlists: ListMusic,
-    eq: SlidersVertical, search: Search, settings: SlidersHorizontal, expand: Scaling,
-    play: Play, pause: Pause, prev: Rewind, next: FastForward,
+    home: House,
+    albums: Disc, artists: UsersRound, tracks: Music, folders: Folder, playlists: ListMusic,
+    eq: SlidersVertical, search: Search, settings: Settings, expand: Maximize2,
+    play: Play, pause: Pause, prev: SkipBack, next: SkipForward,
     shuffle: Shuffle, repeat: Repeat, repeat1: Repeat1,
     volume: Volume2, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
     rescan: RefreshCcw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Disc,
   },
+
+  /* One UI: minimal, thin, Samsung-style */
   oneui: {
-    home: CircleDot, albums: Aperture, artists: Layers, tracks: Music4, folders: Compass, playlists: List,
-    eq: Command, search: Search, settings: Gauge, expand: Expand,
+    home: House,
+    albums: CircleDot, artists: UsersRound, tracks: Music4, folders: Folder, playlists: List,
+    eq: SlidersHorizontal, search: Search, settings: Settings2, expand: Expand,
     play: Play, pause: Pause, prev: SkipBack, next: SkipForward,
-    shuffle: Dices, repeat: Repeat, repeat1: Repeat1,
-    volume: Volume1, mute: VolumeX, favorite: Flame, queue: ListStart,
+    shuffle: Shuffle, repeat: Repeat, repeat1: Repeat1,
+    volume: Volume1, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
-    rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Aperture,
+    rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: CircleDot,
   },
+
+  /* Liquid Glass: expressive but true to meaning */
   liquid: {
-    home: Sparkle, albums: CircleDashed, artists: Gem, tracks: AudioLines, folders: Radio, playlists: Spline,
-    eq: Activity, search: Sparkles, settings: Command, expand: Aperture,
-    play: CirclePlay, pause: CirclePause, prev: Rewind, next: FastForward,
-    shuffle: ArrowLeftRight, repeat: RotateCw, repeat1: Repeat1,
-    volume: Volume2, mute: VolumeX, favorite: Droplet, queue: Layers,
+    home: House,
+    albums: Orbit, artists: Users, tracks: AudioLines, folders: Folder, playlists: ListMusic,
+    eq: SlidersHorizontal, search: Search, settings: Settings2, expand: Maximize2,
+    play: CirclePlay, pause: CirclePause, prev: SkipBack, next: SkipForward,
+    shuffle: Shuffle, repeat: Repeat, repeat1: Repeat1,
+    volume: Volume2, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock, folderOpen: FolderOpen,
-    rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: CircleDashed,
+    rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Orbit,
   },
 };
 

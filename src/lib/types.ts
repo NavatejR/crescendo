@@ -7,6 +7,8 @@ export interface Track {
   albumTitle?: string;
   /** Ready-to-use artwork URL (native asset) — fallback is generated art */
   art?: string;
+  /** Cover palette "r,g,b|r,g,b|…" extracted from the artwork (up to 5 colors) */
+  artPalette?: string;
   year?: number;
   trackNo: number;
   duration: number; // seconds
@@ -25,6 +27,8 @@ export interface Album {
   year: number;
   /** CSS gradient or artwork URL used as cover */
   art: string;
+  /** Cover palette "r,g,b|r,g,b|…" extracted from the artwork */
+  artPalette?: string;
 }
 
 export interface Playlist {

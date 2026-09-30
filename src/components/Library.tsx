@@ -4,7 +4,7 @@ import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
 import type { ViewId } from "../App";
 import { formatTime } from "../lib/mockLibrary";
-import { useLibrary, isArtUrl } from "../lib/libraryStore";
+import { useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
 import { native } from "../lib/native";
 import { usePlayer } from "../player/store";
 import type { Album, Track } from "../lib/types";
@@ -146,7 +146,7 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
             transition={{ delay: Math.min(i * 0.03, 0.4), type: "spring", stiffness: 260, damping: 24 }}
             whileHover={{ y: -4 }}
           >
-            <div className="album-art" style={{ background: isArtUrl(al.art) ? undefined : al.art }}>
+            <div className="album-art" style={{ background: artBackground(al.art, al.artPalette) }}>
               {isArtUrl(al.art) && (
                 <img src={al.art} alt="" className="album-art-img" draggable={false} />
               )}

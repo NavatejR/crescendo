@@ -4,7 +4,7 @@ import { SKINS, OVERHAULS, ACCENTS, type SkinId, type OverhaulId } from "../them
 import { iconFor } from "../theme/iconSet";
 import { useTheme } from "../theme/store";
 import ThemeThumbnail from "../theme/ThemeThumbnail";
-import OrbViz from "../visualizer/OrbViz";
+import LavaGradient from "./LavaGradient";
 import { useUI } from "../lib/uiStore";
 import { usePlayer } from "../player/store";
 
@@ -22,8 +22,6 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     info: iconFor(skin, "info"),
     check: iconFor(skin, "check"),
   };
-
-  const activeOverhaul = OVERHAULS.find((o) => o.id === overhaul)!;
 
   return (
     <AnimatePresence>
@@ -129,14 +127,15 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             {tab === "visualizer" && (
               <>
                 <section className="viz-preview">
-                  <OrbViz size={208} intensity={vizIntensity} alwaysOn />
+                  <div className="viz-preview-box">
+                    <LavaGradient seed="preview" intensity={vizIntensity} active shade={false} />
+                  </div>
                 </section>
                 <section>
-                  <h3 className="settings-h3">Shader style</h3>
+                  <h3 className="settings-h3">Lava lamp</h3>
                   <p className="text-faint settings-sub">
-                    The orb shader follows your <b>{activeOverhaul.name}</b> overhaul — switch
-                    the overhaul to switch the shader. Each one reacts to the music's real
-                    spectrum and is tinted by your skin's accent.
+                    The fullscreen player melts into a slow gradient built from the playing
+                    album's cover colors, breathing gently with the music.
                   </p>
                 </section>
                 <section>
@@ -174,7 +173,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                   Version 0.1.0 · Native lossless engine (FLAC, ALAC, WAV, AIFF, MP3, AAC, OGG,
                   Opus) · 10-band EQ · offline library.
                   <br />
-                  Visualizer orbs by Orbkit — see NOTICE.md for shader attributions.
+                  Visualizer: lava-lamp gradients generated from album artwork palettes.
                 </p>
               </section>
             )}

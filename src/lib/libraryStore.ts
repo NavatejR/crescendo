@@ -31,6 +31,35 @@ export function isArtUrl(art: string | undefined | null): art is string {
   return !!art && /^(asset|https?):/i.test(art);
 }
 
+/** Parse a backend palette string ("r,g,b|r,g,b|…") into CSS colors. */
+export function parsePalette(pal: string | null | undefined): string[] {
+  if (!pal) return [];
+  return pal
+    .split("|")
+    .map((c) => {
+      const [r, g, b] = c.split(",").map((n) => parseInt(n, 10));
+      return Number.isFinite(r) && Number.isFinite(g) && Number.isFinite(b)
+        ? `rgb(${r} ${g} ${b})`
+        : null;
+    })
+    .filter((c): c is string => !!c);
+}
+
+/**
+ * CSS background for any art container: a gradient built from the album's
+ * cover palette when available, the art value itself when it is already
+ * CSS paint, or a quiet surface as the last resort. Used under every
+ * artwork <img> so a slow/failed load never leaves a transparent hole.
+ */
+export function artBackground(art: string | undefined, palette: string | undefined): string {
+  const pal = parsePalette(palette);
+  if (pal.length >= 2) {
+    return `radial-gradient(circle at 30% 25%, ${pal[0]}, ${pal[pal.length - 1]} 78%)`;
+  }
+  if (art && !isArtUrl(art)) return art;
+  return "var(--surface-2)";
+}
+
 /** Convert a DB track into the UI Track view-model. */
 export function toTrack(t: NativeTrack): Track {
   return {
@@ -40,6 +69,7 @@ export function toTrack(t: NativeTrack): Track {
     albumId: `${t.albumArtist}::${t.album}`,
     albumTitle: t.album,
     art: artUrl(t.artPath),
+    artPalette: t.artPalette ?? undefined,
     year: t.year,
     trackNo: t.trackNo,
     duration: t.duration,
@@ -59,6 +89,7 @@ export function toAlbum(a: NativeAlbum): Album {
     artist: a.artist,
     year: a.year,
     art: artUrl(a.artPath) ?? fallbackArt(a.key),
+    artPalette: a.artPalette ?? undefined,
   };
 }
 

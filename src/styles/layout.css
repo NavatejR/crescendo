@@ -1298,3 +1298,80 @@ input[type="range"] {
   justify-content: space-between;
   margin-top: 6px;
 }
+
+/* ---------- Lava gradient (album-palette backdrop / visualizer) ---------- */
+.lava {
+  --lava-amp: 0;
+  --lava-speed: 1;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lava-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(48px) saturate(1.15);
+  opacity: 0.85;
+  will-change: transform;
+  animation: lava-drift ease-in-out infinite alternate;
+  animation-duration: calc(30s / var(--lava-speed));
+}
+@keyframes lava-drift {
+  from {
+    transform: translate(-50%, -50%) scale(calc(0.94 + var(--lava-amp) * 0.16));
+  }
+  to {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      scale(calc(1.08 + var(--lava-amp) * 0.26));
+  }
+}
+.lava-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, transparent 42%, rgb(0 0 0 / 0.55) 100%),
+    linear-gradient(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.22));
+}
+/* Placeholder lamp when the album has no palette */
+.lava-blob-fallback {
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  height: 70%;
+  padding-bottom: 0;
+  background: radial-gradient(closest-side, var(--accent), transparent 70%);
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lava-blob {
+    animation-duration: 120s;
+  }
+}
+
+/* ---------- Now Playing: opaque stage over the lava backdrop ---------- */
+.np-opaque {
+  background:
+    radial-gradient(120% 100% at 50% -10%, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.86) 70%),
+    rgb(8 8 12 / 0.97);
+}
+
+/* Mini-orb glow coupling (driven from MiniOrb rAF) */
+.mini-orb-core {
+  opacity: calc(0.45 + var(--orb-glow, 0.35) * 0.55);
+  box-shadow: 0 0 calc(10px + var(--orb-glow, 0) * 16px) var(--accent-glow);
+}
+
+/* Visualizer preview box in Settings */
+.viz-preview-box {
+  position: relative;
+  width: 100%;
+  height: 190px;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  border: var(--border-w) solid var(--border);
+  background: rgb(8 8 12);
+}
+.viz-preview-box .lava {
+  position: absolute;
+}
