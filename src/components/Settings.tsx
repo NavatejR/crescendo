@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Palette, Sparkles, Info, Check } from "lucide-react";
 import { SKINS, OVERHAULS, ACCENTS, type SkinId, type OverhaulId } from "../theme/skins";
+import { iconFor } from "../theme/iconSet";
 import { useTheme } from "../theme/store";
 import ThemeThumbnail from "../theme/ThemeThumbnail";
-import { useUI, type VizStyle } from "../lib/uiStore";
+import OrbViz from "../visualizer/OrbViz";
+import { useUI } from "../lib/uiStore";
 import { usePlayer } from "../player/store";
 
 type Tab = "appearance" | "visualizer" | "about";
@@ -12,8 +13,17 @@ type Tab = "appearance" | "visualizer" | "about";
 export default function Settings({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("appearance");
   const { skin, overhaul, accent, setSkin, setOverhaul, setAccent } = useTheme();
-  const { vizStyle, vizIntensity, setVizStyle, setVizIntensity } = useUI();
+  const { vizIntensity, setVizIntensity } = useUI();
   const volume = usePlayer((s) => s.volume);
+  const I = {
+    close: iconFor(skin, "close"),
+    palette: iconFor(skin, "palette"),
+    sparkles: iconFor(skin, "sparkles"),
+    info: iconFor(skin, "info"),
+    check: iconFor(skin, "check"),
+  };
+
+  const activeOverhaul = OVERHAULS.find((o) => o.id === overhaul)!;
 
   return (
     <AnimatePresence>
@@ -37,9 +47,9 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             <div className="settings-tabs">
               {(
                 [
-                  ["appearance", "Appearance", Palette],
-                  ["visualizer", "Visualizer", Sparkles],
-                  ["about", "About", Info],
+                  ["appearance", "Appearance", I.palette],
+                  ["visualizer", "Visualizer", I.sparkles],
+                  ["about", "About", I.info],
                 ] as const
               ).map(([id, label, Icon]) => (
                 <button
@@ -51,7 +61,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 </button>
               ))}
             </div>
-            <button className="icon-btn" onClick={onClose}><X size={17} /></button>
+            <button className="icon-btn" onClick={onClose}><I.close size={17} /></button>
           </div>
 
           <div className="settings-body">
@@ -60,7 +70,8 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 <section>
                   <h3 className="settings-h3">Interface overhaul</h3>
                   <p className="text-faint settings-sub">
-                    Structure & feel — layout, shape, blur, shadows, density.
+                    A full structural redesign — shell layout, navigation, grid format and
+                    transport all change, not just the finish.
                   </p>
                   <div className="thumb-grid">
                     {OVERHAULS.map((o) => (
@@ -68,6 +79,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         key={o.id}
                         skin={skin}
                         overhaul={o.id as OverhaulId}
+                        axis="overhaul"
                         active={overhaul === o.id}
                         onClick={() => setOverhaul(o.id)}
                       />
@@ -78,7 +90,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 <section>
                   <h3 className="settings-h3">Skin</h3>
                   <p className="text-faint settings-sub">
-                    Identity — colors & typography. Combines with any overhaul.
+                    Identity — colors, typography and the icon set. Combines with any overhaul.
                   </p>
                   <div className="thumb-grid">
                     {SKINS.map((s) => (
@@ -86,6 +98,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         key={s.id}
                         skin={s.id as SkinId}
                         overhaul={overhaul}
+                        axis="skin"
                         active={skin === s.id}
                         onClick={() => setSkin(s.id)}
                       />
@@ -95,7 +108,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
                 <section>
                   <h3 className="settings-h3">Accent</h3>
-                  <p className="text-faint settings-sub">Overrides the skin's native accent.</p>
+                  <p className="text-faint settings-sub">Overrides the skin's native accent — UI and visualizer alike.</p>
                   <div className="accent-row">
                     {ACCENTS.map((a) => (
                       <button
@@ -105,7 +118,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         title={a.name}
                         onClick={() => setAccent(a.value)}
                       >
-                        {accent === a.value && <Check size={12} color={a.value ? "#000" : "inherit"} />}
+                        {accent === a.value && <I.check size={12} color={a.value ? "#000" : "inherit"} />}
                       </button>
                     ))}
                   </div>
@@ -115,22 +128,16 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
             {tab === "visualizer" && (
               <>
+                <section className="viz-preview">
+                  <OrbViz size={208} intensity={vizIntensity} alwaysOn />
+                </section>
                 <section>
                   <h3 className="settings-h3">Shader style</h3>
                   <p className="text-faint settings-sub">
-                    Rendered live on the GPU in the fullscreen player.
+                    The orb shader follows your <b>{activeOverhaul.name}</b> overhaul — switch
+                    the overhaul to switch the shader. Each one reacts to the music's real
+                    spectrum and is tinted by your skin's accent.
                   </p>
-                  <div className="seg-row">
-                    {(["orbs", "aurora", "rings"] as VizStyle[]).map((s) => (
-                      <button
-                        key={s}
-                        className={`chip ${vizStyle === s ? "chip-active" : ""}`}
-                        onClick={() => setVizStyle(s)}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
                 </section>
                 <section>
                   <h3 className="settings-h3">Intensity</h3>
@@ -164,8 +171,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                   macOS · Windows · Linux
                 </p>
                 <p className="text-faint">
-                  Version 0.1.0 · UI preview build with simulated audio.
-                  Native lossless engine, EQ DSP and folder scanning arrive next.
+                  Version 0.1.0 · Native lossless engine (FLAC, ALAC, WAV, AIFF, MP3, AAC, OGG,
+                  Opus) · 10-band EQ · offline library.
+                  <br />
+                  Visualizer orbs by Orbkit — see NOTICE.md for shader attributions.
                 </p>
               </section>
             )}

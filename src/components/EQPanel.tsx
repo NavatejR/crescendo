@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Power } from "lucide-react";
 import { native } from "../lib/native";
+import { useTheme } from "../theme/store";
+import { iconFor } from "../theme/iconSet";
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
@@ -25,6 +26,9 @@ export default function EQPanel({ onClose }: { onClose: () => void }) {
   const [preamp, setPreamp] = useState(0);
   const [gains, setGains] = useState<number[]>(EQ_PRESETS.Flat);
   const [preset, setPreset] = useState("Flat");
+  const skin = useTheme((s) => s.skin);
+  const IPower = iconFor(skin, "power");
+  const IClose = iconFor(skin, "close");
 
   function applyPreset(name: string) {
     setPreset(name);
@@ -58,7 +62,7 @@ export default function EQPanel({ onClose }: { onClose: () => void }) {
               onClick={() => setEnabled(!enabled)}
               title={enabled ? "EQ on" : "EQ bypassed"}
             >
-              <Power size={16} />
+              <IPower size={16} />
             </button>
             <span>Equalizer</span>
             {!enabled && <span className="text-faint eq-bypassed">bypassed</span>}
@@ -74,7 +78,7 @@ export default function EQPanel({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </div>
-          <button className="icon-btn" onClick={onClose} title="Close"><X size={16} /></button>
+          <button className="icon-btn" onClick={onClose} title="Close"><IClose size={16} /></button>
         </div>
 
         <div className="eq-preamp">

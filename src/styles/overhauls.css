@@ -38,23 +38,6 @@
   --density: 1;
 }
 
-/* ---- Liquid Glass — Apple-style specular, chromatic edges ---- */
-[data-overhaul="liquid"] {
-  --radius-s: 14px;
-  --radius-m: 22px;
-  --radius-l: 30px;
-  --border-w: 1px;
-  --border-alpha: 0.16;
-  --surface-alpha: 0.08;
-  --surface-2-alpha: 0.12;
-  --blur: 40px;
-  --blur-saturate: 180%;
-  --shadow-rest: 0 12px 40px rgb(0 0 0 / 0.35);
-  --shadow-pop: 0 24px 70px rgb(0 0 0 / 0.5);
-  --sheen: linear-gradient(135deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.02) 40%, rgb(255 255 255 / 0.08));
-  --density: 1.02;
-}
-
 /* ---- Brutalism — raw borders, offset hard shadows, zero blur ---- */
 [data-overhaul="brutal"] {
   --radius-s: 2px;

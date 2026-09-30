@@ -1,14 +1,16 @@
-import { Disc3, ListMusic, Folder, User, Music4, SlidersHorizontal } from "lucide-react";
 import type { ViewId } from "../App";
 import { usePlayer } from "../player/store";
+import { useTheme } from "../theme/store";
+import { iconFor, type IconName } from "../theme/iconSet";
 
-const NAV: { id: ViewId; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: "albums", label: "Albums", icon: Disc3 },
-  { id: "artists", label: "Artists", icon: User },
-  { id: "tracks", label: "Tracks", icon: Music4 },
-  { id: "folders", label: "Folders", icon: Folder },
-  { id: "playlists", label: "Playlists", icon: ListMusic },
-  { id: "eq", label: "Equalizer", icon: SlidersHorizontal },
+const NAV: { id: ViewId; label: string; icon: IconName }[] = [
+  { id: "home", label: "Home", icon: "home" },
+  { id: "albums", label: "Albums", icon: "albums" },
+  { id: "artists", label: "Artists", icon: "artists" },
+  { id: "tracks", label: "Tracks", icon: "tracks" },
+  { id: "folders", label: "Folders", icon: "folders" },
+  { id: "playlists", label: "Playlists", icon: "playlists" },
+  { id: "eq", label: "Equalizer", icon: "eq" },
 ];
 
 export default function Sidebar({
@@ -19,23 +21,27 @@ export default function Sidebar({
   onView: (v: ViewId) => void;
 }) {
   const playing = usePlayer((s) => s.status === "playing");
+  const skin = useTheme((s) => s.skin);
 
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
-        {NAV.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            className={`side-item ${view === id ? "side-item-active" : ""}`}
-            onClick={() => onView(id)}
-          >
-            <Icon size={17} />
-            <span>{label}</span>
-            {id === "eq" && playing && (
-              <span className="side-eq-live" aria-label="equalizer active" />
-            )}
-          </button>
-        ))}
+        {NAV.map(({ id, label, icon }) => {
+          const Icon = iconFor(skin, icon);
+          return (
+            <button
+              key={id}
+              className={`side-item ${view === id ? "side-item-active" : ""}`}
+              onClick={() => onView(id)}
+            >
+              <Icon size={17} />
+              <span>{label}</span>
+              {id === "eq" && playing && (
+                <span className="side-eq-live" aria-label="equalizer active" />
+              )}
+            </button>
+          );
+        })}
       </nav>
       <div className="sidebar-foot">
         <div className="dot-grid sidebar-foot-dots" />

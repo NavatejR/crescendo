@@ -1,0 +1,489 @@
+/* ==========================================================================
+   STRUCTURAL OVERRIDES — the per-overhaul shell redesign.
+   Loaded after layout.css so each overhaul can re-shape the shell itself:
+   sidebar format, grid format, playbar structure, density and typography.
+   Identity (colors/fonts) still comes from the skin axis.
+   ========================================================================== */
+
+/* ---------- Home view (populated everywhere except minimal) ---------- */
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.home-head h1 {
+  font-family: var(--font-display);
+  font-size: calc(28px * var(--type-scale));
+  letter-spacing: var(--tracking-display);
+  margin: 8px 0 4px;
+  font-weight: 700;
+}
+.home-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.home-stats b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.home-stats i {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--text-faint);
+  opacity: 0.6;
+}
+.home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.home-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.home-sec-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 15px;
+  letter-spacing: var(--tracking-display);
+}
+.home-sec-link {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.home-sec-link:hover {
+  color: var(--text);
+}
+.home-recent {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 158px;
+  gap: var(--card-gap);
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.home-recent-card {
+  position: relative;
+  aspect-ratio: 1;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  box-shadow: var(--shadow-rest);
+}
+.home-recent-card::after {
+  content: "";
+  position: absolute;
+  inset: 40% 0 0;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.68));
+  pointer-events: none;
+}
+.home-recent-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+.home-recent-play {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.45);
+  border: 1px solid rgb(255 255 255 / 0.25);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.home-recent-card:hover .home-recent-play {
+  opacity: 1;
+}
+.home-recent-title,
+.home-recent-artist {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.home-recent-title {
+  bottom: 24px;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.home-recent-artist {
+  bottom: 9px;
+  font-size: 11px;
+  color: rgb(255 255 255 / 0.75);
+}
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.home-chip {
+  border: var(--border-w) solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 550;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.home-chip:hover {
+  color: var(--text);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+}
+.home-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+}
+.home-empty p {
+  margin: 0;
+}
+.viz-preview {
+  display: grid;
+  place-items: center;
+  padding: 8px 0;
+}
+.np-viz-note {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   MINIMALISM — icon rail, quiet surfaces, hairline transport
+   ========================================================================== */
+[data-overhaul="minimal"] .app-body {
+  grid-template-columns: 56px 1fr;
+}
+[data-overhaul="minimal"] .sidebar {
+  padding: 10px 8px;
+}
+[data-overhaul="minimal"] .side-item {
+  justify-content: center;
+  padding: 10px 0;
+  position: relative;
+}
+[data-overhaul="minimal"] .side-item span {
+  display: none;
+}
+[data-overhaul="minimal"] .sidebar-foot {
+  display: none;
+}
+[data-overhaul="minimal"] .app-main {
+  padding: 4px 26px 24px;
+}
+[data-overhaul="minimal"] .album-grid {
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 8px;
+}
+[data-overhaul="minimal"] .album-card {
+  padding: 4px;
+}
+[data-overhaul="minimal"] .album-card:hover {
+  background: transparent;
+}
+[data-overhaul="minimal"] .album-card:hover .album-art {
+  box-shadow: var(--shadow-pop);
+}
+[data-overhaul="minimal"] .playbar {
+  margin: 0;
+  border-radius: 0;
+  border-inline: none;
+  border-bottom: none;
+  border-top: var(--border-w) solid var(--border);
+  background: var(--bg);
+  box-shadow: none;
+  min-height: 58px;
+  padding: 5px 12px;
+  gap: 10px;
+}
+[data-overhaul="minimal"] .pb-play {
+  width: 36px;
+  height: 36px;
+  box-shadow: none;
+}
+[data-overhaul="minimal"] .pb-art {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-s);
+  box-shadow: none;
+}
+[data-overhaul="minimal"] .titlebar {
+  height: 42px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+[data-overhaul="minimal"] .brand-name,
+[data-overhaul="minimal"] .home-stats {
+  display: none;
+}
+[data-overhaul="minimal"] .home {
+  gap: 20px;
+}
+
+/* ==========================================================================
+   GLASSMORPHISM — floating pill rail, frosted roomy cards, detached bar
+   ========================================================================== */
+[data-overhaul="glass"] .app-body {
+  grid-template-columns: 76px 1fr;
+}
+[data-overhaul="glass"] .sidebar {
+  padding: 12px 10px;
+  justify-content: center;
+}
+[data-overhaul="glass"] .sidebar-nav {
+  gap: 10px;
+}
+[data-overhaul="glass"] .side-item {
+  justify-content: center;
+  padding: 12px 0;
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  border: var(--border-w) solid var(--border);
+  backdrop-filter: blur(var(--blur)) saturate(var(--blur-saturate));
+  box-shadow: var(--shadow-rest);
+}
+[data-overhaul="glass"] .side-item span {
+  display: none;
+}
+[data-overhaul="glass"] .side-item-active {
+  background: var(--accent-soft);
+  box-shadow: 0 0 22px var(--accent-glow);
+}
+[data-overhaul="glass"] .sidebar-foot {
+  display: none;
+}
+[data-overhaul="glass"] .app-main {
+  padding: 8px 30px 32px;
+}
+[data-overhaul="glass"] .album-card {
+  background: var(--surface);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-l);
+  padding: 10px;
+  backdrop-filter: blur(var(--blur)) saturate(var(--blur-saturate));
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+[data-overhaul="glass"] .album-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-pop);
+  border-color: rgb(var(--accent-rgb) / 0.35);
+}
+[data-overhaul="glass"] .album-art {
+  border-radius: var(--radius-m);
+}
+[data-overhaul="glass"] .playbar {
+  margin: 0 18px 16px;
+  border-radius: var(--radius-l);
+  padding: 10px 18px;
+  box-shadow: var(--shadow-pop);
+}
+[data-overhaul="glass"] .pb-art {
+  border-radius: var(--radius-m);
+}
+[data-overhaul="glass"] .eq-panel,
+[data-overhaul="glass"] .settings {
+  backdrop-filter: blur(calc(var(--blur) + 10px)) saturate(var(--blur-saturate));
+}
+
+/* ==========================================================================
+   BRUTALISM — boxed nav slabs, loud bordered blocks, squared command bar
+   ========================================================================== */
+[data-overhaul="brutal"] .side-item {
+  border: var(--border-w) solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-s);
+  margin-bottom: 6px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 12px;
+}
+[data-overhaul="brutal"] .side-item:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--hard-shadow);
+}
+[data-overhaul="brutal"] .side-item-active {
+  background: var(--accent);
+  color: var(--text-on-accent);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--hard-shadow);
+}
+[data-overhaul="brutal"] .sidebar-foot-dots {
+  border: var(--border-w) solid var(--border);
+}
+[data-overhaul="brutal"] .album-card {
+  border: var(--border-w) solid var(--border);
+  background: var(--surface);
+  padding: 10px;
+}
+[data-overhaul="brutal"] .album-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 5px 5px 0 rgb(var(--accent-rgb) / 0.9);
+  background: var(--surface-2);
+}
+[data-overhaul="brutal"] .album-title {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+}
+[data-overhaul="brutal"] .album-grid {
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+}
+[data-overhaul="brutal"] .playbar {
+  margin: 0;
+  border-radius: 0;
+  border-inline: none;
+  border-bottom: none;
+  border-top: var(--border-w) solid var(--border);
+  background: var(--bg-elev);
+  min-height: 86px;
+}
+[data-overhaul="brutal"] .pb-play {
+  border-radius: 0;
+  border: var(--border-w) solid var(--border);
+  box-shadow: var(--hard-shadow);
+}
+[data-overhaul="brutal"] .pb-art {
+  border-radius: 0;
+}
+[data-overhaul="brutal"] .titlebar {
+  border-bottom: var(--border-w) solid var(--border);
+}
+[data-overhaul="brutal"] .brand-name {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+}
+[data-overhaul="brutal"] .np-play {
+  border-radius: 0;
+  border: var(--border-w) solid var(--border);
+  box-shadow: var(--hard-shadow);
+}
+[data-overhaul="brutal"] .badge-lossless {
+  border-radius: 0;
+  text-transform: uppercase;
+}
+[data-overhaul="brutal"] .home-chip,
+[data-overhaul="brutal"] .home-recent-card {
+  border-radius: var(--radius-s);
+}
+[data-overhaul="brutal"] .home-sec-title {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   MAXIMALISM — wide nav panel, hero albums, dense wall, big showy type
+   ========================================================================== */
+[data-overhaul="maximal"] .app-body {
+  grid-template-columns: 252px 1fr;
+}
+[data-overhaul="maximal"] .sidebar {
+  padding: 16px 14px;
+}
+[data-overhaul="maximal"] .sidebar-nav {
+  gap: 6px;
+}
+[data-overhaul="maximal"] .side-item {
+  padding: 12px 16px;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 650;
+  border-radius: var(--radius-m);
+}
+[data-overhaul="maximal"] .side-item-active {
+  background: linear-gradient(90deg, var(--accent-soft), transparent 80%);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+[data-overhaul="maximal"] .sidebar-foot-dots {
+  height: 64px;
+  border-radius: var(--radius-m);
+}
+[data-overhaul="maximal"] .app-main {
+  padding: 8px 30px 34px;
+}
+[data-overhaul="maximal"] .album-grid {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: calc(var(--card-gap) * 0.85);
+}
+/* Featured hero: the first card claims a 2×2 stage */
+[data-overhaul="maximal"] .album-grid > .album-card:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+[data-overhaul="maximal"] .album-grid > .album-card:first-child .album-title {
+  font-size: 16px;
+  font-weight: 750;
+}
+[data-overhaul="maximal"] .home-head h1,
+[data-overhaul="maximal"] .lib-head h1 {
+  font-size: calc(34px * var(--type-scale));
+  background: linear-gradient(92deg, var(--text) 30%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+[data-overhaul="maximal"] .home-recent {
+  grid-auto-columns: 186px;
+}
+[data-overhaul="maximal"] .playbar {
+  margin: 0 14px 14px;
+  border-radius: var(--radius-l);
+  min-height: 92px;
+  padding: 12px 18px;
+}
+[data-overhaul="maximal"] .pb-art {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-m);
+}
+[data-overhaul="maximal"] .np-title {
+  font-size: calc(38px * var(--type-scale));
+}
+
+/* ---------- Reduced motion: calm the new pieces too ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .home-recent-card,
+  .album-card {
+    transition: none !important;
+  }
+}

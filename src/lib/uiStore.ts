@@ -1,49 +1,40 @@
 import { create } from "zustand";
 
-export type VizStyle = "orbs" | "aurora" | "rings";
-
 const LS = "crescendo.ui.v1";
 
 interface UIState {
   search: string;
-  vizStyle: VizStyle;
-  vizIntensity: number; // 0..1
+  /** Visualizer intensity 0.2..1.5. The shader itself follows the overhaul. */
+  vizIntensity: number;
   setSearch: (s: string) => void;
-  setVizStyle: (s: VizStyle) => void;
   setVizIntensity: (v: number) => void;
 }
 
-function load(): Pick<UIState, "vizStyle" | "vizIntensity"> {
+function load(): Pick<UIState, "vizIntensity"> {
   try {
     const raw = localStorage.getItem(LS);
     if (raw) {
       const p = JSON.parse(raw);
+      // `vizStyle` from older builds is intentionally dropped — the orb
+      // shader now follows the active overhaul instead of a picker.
       return {
-        vizStyle: p.vizStyle ?? "orbs",
         vizIntensity: typeof p.vizIntensity === "number" ? p.vizIntensity : 0.8,
       };
     }
   } catch {
     /* ignore */
   }
-  return { vizStyle: "orbs", vizIntensity: 0.8 };
+  return { vizIntensity: 0.8 };
 }
 
 function persist(s: UIState) {
-  localStorage.setItem(
-    LS,
-    JSON.stringify({ vizStyle: s.vizStyle, vizIntensity: s.vizIntensity }),
-  );
+  localStorage.setItem(LS, JSON.stringify({ vizIntensity: s.vizIntensity }));
 }
 
 export const useUI = create<UIState>((set, get) => ({
   search: "",
   ...load(),
   setSearch: (search) => set({ search }),
-  setVizStyle: (vizStyle) => {
-    set({ vizStyle });
-    persist(get());
-  },
   setVizIntensity: (vizIntensity) => {
     set({ vizIntensity });
     persist(get());

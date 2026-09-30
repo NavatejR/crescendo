@@ -1,4 +1,5 @@
-import { Search, Settings as SettingsIcon, Maximize2 } from "lucide-react";
+import { useTheme } from "../theme/store";
+import { iconFor } from "../theme/iconSet";
 
 interface Props {
   onOpenSettings: () => void;
@@ -6,6 +7,13 @@ interface Props {
 }
 
 export default function TitleBar({ onOpenSettings, onToggleNowPlaying }: Props) {
+  const skin = useTheme((s) => s.skin);
+  const I = {
+    search: iconFor(skin, "search"),
+    expand: iconFor(skin, "expand"),
+    settings: iconFor(skin, "settings"),
+  };
+
   return (
     <header className="titlebar" data-tauri-drag-region>
       {/* Draggable spacer also serves as the brand mark zone */}
@@ -15,7 +23,7 @@ export default function TitleBar({ onOpenSettings, onToggleNowPlaying }: Props) 
       </div>
 
       <div className="titlebar-search">
-        <Search size={14} className="text-faint" />
+        <I.search size={14} className="text-faint" />
         <input
           className="input titlebar-search-input"
           placeholder="Search library…"
@@ -27,10 +35,10 @@ export default function TitleBar({ onOpenSettings, onToggleNowPlaying }: Props) 
 
       <div className="titlebar-actions">
         <button className="icon-btn" onClick={onToggleNowPlaying} title="Now Playing (⌘F)">
-          <Maximize2 size={16} />
+          <I.expand size={16} />
         </button>
         <button className="icon-btn" onClick={onOpenSettings} title="Settings (⌘,)">
-          <SettingsIcon size={16} />
+          <I.settings size={16} />
         </button>
       </div>
     </header>

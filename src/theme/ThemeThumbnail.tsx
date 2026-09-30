@@ -4,6 +4,8 @@ import { SKINS, OVERHAULS } from "./skins";
 interface Props {
   skin: SkinId;
   overhaul: OverhaulId;
+  /** Which axis this card represents: the big label follows it. */
+  axis: "skin" | "overhaul";
   active?: boolean;
   onClick?: () => void;
 }
@@ -13,9 +15,12 @@ interface Props {
  * actual CSS tokens (data-skin / data-overhaul re-resolve the token blocks
  * for this subtree), so thumbnails are always truthful to the real UI.
  */
-export default function ThemeThumbnail({ skin, overhaul, active, onClick }: Props) {
+export default function ThemeThumbnail({ skin, overhaul, axis, active, onClick }: Props) {
   const skinMeta = SKINS.find((s) => s.id === skin)!;
   const overhaulMeta = OVERHAULS.find((o) => o.id === overhaul)!;
+
+  const name = axis === "skin" ? skinMeta.name : overhaulMeta.name;
+  const tag = axis === "skin" ? skinMeta.tagline : overhaulMeta.structure;
 
   return (
     <button
@@ -32,7 +37,7 @@ export default function ThemeThumbnail({ skin, overhaul, active, onClick }: Prop
         </div>
         <div className="tn-meta">
           <span className="tn-title">Crescendo</span>
-          <span className="tn-artist">{skinMeta.name}</span>
+          <span className="tn-artist">{axis === "skin" ? overhaulMeta.name : skinMeta.name}</span>
           <div className="tn-progress">
             <div className="tn-progress-fill" />
           </div>
@@ -43,8 +48,8 @@ export default function ThemeThumbnail({ skin, overhaul, active, onClick }: Prop
           </div>
         </div>
       </div>
-      <span className="tn-name">{overhaulMeta.name}</span>
-      <span className="tn-tag">{overhaulMeta.tagline}</span>
+      <span className="tn-name">{name}</span>
+      <span className="tn-tag">{tag}</span>
     </button>
   );
 }

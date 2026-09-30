@@ -112,3 +112,7 @@ Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). File bugs with
 ## 📜 License
 
 [MIT](LICENSE) © 2026 NavatejR
+
+Shader-based visualizer orbs are vendored from [Orbkit](https://orbkit.zzzzshawn.cloud/) —
+some shaders are ported from @XorDev's work and are non-commercial use only with
+attribution. See [NOTICE.md](NOTICE.md) before redistributing.

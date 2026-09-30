@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Play, Plus, ListMusic, Folder as FolderIcon, SlidersHorizontal, Clock3, FolderOpen, RefreshCw,
-} from "lucide-react";
+import { useTheme } from "../theme/store";
+import { iconFor } from "../theme/iconSet";
 import type { ViewId } from "../App";
 import { formatTime } from "../lib/mockLibrary";
 import { useLibrary, isArtUrl } from "../lib/libraryStore";
@@ -34,10 +33,13 @@ export default function Library({ view }: { view: ViewId }) {
     );
   }, [albums, q]);
 
+  const skin = useTheme((s) => s.skin);
+  const IRescan = iconFor(skin, "rescan");
+
   if (!ready) {
     return (
       <div className="eq-landing">
-        <RefreshCw size={20} className="text-faint" />
+        <IRescan size={20} className="text-faint" />
         <p className="text-faint">Loading library…</p>
       </div>
     );
@@ -100,6 +102,8 @@ import { useUI } from "../lib/uiStore";
 /* ---------------- Empty state ---------------- */
 function EmptyLibrary({ nativeMode }: { nativeMode: boolean }) {
   const [busy, setBusy] = useState(false);
+  const skin = useTheme((s) => s.skin);
+  const IFolderOpen = iconFor(skin, "folderOpen");
   async function add() {
     setBusy(true);
     const dir = await native.pickFolder();
@@ -108,14 +112,14 @@ function EmptyLibrary({ nativeMode }: { nativeMode: boolean }) {
   }
   return (
     <div className="eq-landing">
-      <FolderOpen size={30} className="text-faint" />
+      <IFolderOpen size={30} className="text-faint" />
       <h2 style={{ margin: 0, fontFamily: "var(--font-display)" }}>Welcome to Crescendo</h2>
       <p className="text-dim" style={{ maxWidth: 380, margin: "0 0 8px" }}>
         Add a folder of music to begin. FLAC, ALAC, WAV, AIFF, MP3, AAC, OGG and Opus are supported — lossless formats get the badge.
       </p>
       {nativeMode ? (
         <button className="btn btn-accent" onClick={add} disabled={busy}>
-          <FolderOpen size={14} /> {busy ? "Adding…" : "Choose a music folder"}
+          <IFolderOpen size={14} /> {busy ? "Adding…" : "Choose a music folder"}
         </button>
       ) : (
         <p className="text-faint">Running in preview mode with a demo library — the desktop app scans real folders.</p>
@@ -127,6 +131,8 @@ function EmptyLibrary({ nativeMode }: { nativeMode: boolean }) {
 /* ---------------- Albums ---------------- */
 function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) => void }) {
   const allTracks = useLibrary((s) => s.tracks);
+  const skin = useTheme((s) => s.skin);
+  const IPlay = iconFor(skin, "play");
   return (
     <div className="album-grid">
       {albums.map((al, i) => {
@@ -145,7 +151,7 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
                 <img src={al.art} alt="" className="album-art-img" draggable={false} />
               )}
               <button className="album-play" onClick={() => onPlay(tracks)} title={`Play ${al.title}`}>
-                <Play size={16} style={{ marginLeft: 2 }} />
+                <IPlay size={16} style={{ marginLeft: 2 }} />
               </button>
             </div>
             <span className="album-title">{al.title}</span>
@@ -159,6 +165,8 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
 
 /* ---------------- Artists ---------------- */
 function ArtistsView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[]) => void }) {
+  const skin = useTheme((s) => s.skin);
+  const IPlay = iconFor(skin, "play");
   const byArtist = useMemo(() => {
     const map = new Map<string, Track[]>();
     for (const t of tracks) {
@@ -184,7 +192,7 @@ function ArtistsView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[])
             <span className="text-faint">{list.length} tracks</span>
           </div>
           <button className="btn" onClick={() => onPlay(list)}>
-            <Play size={14} /> Play
+            <IPlay size={14} /> Play
           </button>
         </motion.div>
       ))}
@@ -196,6 +204,9 @@ function ArtistsView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[])
 function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], idx?: number) => void }) {
   const currentId = usePlayer((s) => (s.index >= 0 ? s.queue[s.index] : undefined));
   const status = usePlayer((s) => s.status);
+  const skin = useTheme((s) => s.skin);
+  const IPlay = iconFor(skin, "play");
+  const IClock = iconFor(skin, "clock");
 
   return (
     <div className="track-table panel">
@@ -205,7 +216,7 @@ function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], 
         <span className="tr-artist">Artist</span>
         <span className="tr-album">Album</span>
         <span className="tr-format">Format</span>
-        <span className="tr-time"><Clock3 size={12} /></span>
+        <span className="tr-time"><IClock size={12} /></span>
       </div>
       {tracks.map((t, i) => {
         const isCur = t.id === currentId;
@@ -228,7 +239,7 @@ function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], 
             </span>
             <span className="tr-time text-faint">{formatTime(t.duration)}</span>
             <button className="icon-btn tr-play" onClick={() => onPlay(tracks, i)} title="Play">
-              <Play size={13} />
+              <IPlay size={13} />
             </button>
           </div>
         );
@@ -241,6 +252,10 @@ function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], 
 function FoldersView() {
   const [folders, setFolders] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const skin = useTheme((s) => s.skin);
+  const IFolder = iconFor(skin, "folders");
+  const IPlus = iconFor(skin, "plus");
+  const IRescan = iconFor(skin, "rescan");
 
   useMemo(() => {
     native.listFolders().then((f) => setFolders(f ?? []));
@@ -271,7 +286,7 @@ function FoldersView() {
   return (
     <div className="folders-view">
       <div className="panel folders-card">
-        <FolderIcon size={22} className="text-dim" />
+        <IFolder size={22} className="text-dim" />
         <div>
           <span className="folders-title">Watched folders</span>
           <p className="text-faint">
@@ -279,16 +294,16 @@ function FoldersView() {
           </p>
         </div>
         <button className="btn btn-accent" onClick={add} disabled={busy}>
-          <Plus size={14} /> Add folder
+          <IPlus size={14} /> Add folder
         </button>
         <button className="btn" onClick={rescan} disabled={busy} title="Rescan all folders">
-          <RefreshCw size={14} />
+          <IRescan size={14} />
         </button>
       </div>
       <div className="folder-tree">
         {folders.map((f) => (
           <div key={f} className="folder-node">
-            <FolderIcon size={14} className="text-faint" />
+            <IFolder size={14} className="text-faint" />
             <span>{f}</span>
             <button className="icon-btn folder-remove" onClick={() => remove(f)} title="Remove folder">
               ×
@@ -312,6 +327,10 @@ function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void 
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const loaded = useLibrary((s) => s.ready);
+  const skin = useTheme((s) => s.skin);
+  const IPlay = iconFor(skin, "play");
+  const IPlus = iconFor(skin, "plus");
+  const IListMusic = iconFor(skin, "playlists");
 
   async function load() {
     const pls = await native.listPlaylists();
@@ -369,7 +388,7 @@ function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void 
               <span className="text-faint">{pl.trackIds.length} tracks</span>
               <div className="pl-actions">
                 <button className="btn" onClick={() => onPlay(tracks)}>
-                  <Play size={13} /> Play
+                  <IPlay size={13} /> Play
                 </button>
                 <button
                   className="icon-btn"
@@ -401,13 +420,13 @@ function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void 
           </div>
         ) : (
           <button className="pl-card panel pl-add" onClick={() => setCreating(true)}>
-            <Plus size={20} />
+            <IPlus size={20} />
             <span>New playlist</span>
           </button>
         )}
       </div>
       <div className="pl-hint text-faint">
-        <ListMusic size={13} /> Double-click a playlist to play it.
+        <IListMusic size={13} /> Double-click a playlist to play it.
       </div>
     </div>
   );
@@ -418,9 +437,11 @@ function EQView() {
   const showEQ = () => {
     document.querySelector<HTMLButtonElement>('[title="Equalizer (⌘E)"]')?.click();
   };
+  const skin = useTheme((s) => s.skin);
+  const IEq = iconFor(skin, "eq");
   return (
     <div className="eq-landing">
-      <SlidersHorizontal size={22} className="text-dim" />
+      <IEq size={22} className="text-dim" />
       <p className="text-dim">
         The 10-band parametric equalizer lives in a slide-up panel.
       </p>

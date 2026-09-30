@@ -1,22 +1,34 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Volume2, ChevronDown, ListMusic, X, Disc3,
-} from "lucide-react";
+import { ChevronDown, Disc3 } from "lucide-react";
 import { usePlayer } from "../player/store";
+import { useTheme } from "../theme/store";
+import { iconFor } from "../theme/iconSet";
 import { formatTime } from "../lib/mockLibrary";
 import { useTrackById, useAlbumById, useLibrary, isArtUrl } from "../lib/libraryStore";
 import { useUI } from "../lib/uiStore";
-import SpectrumCanvas from "../visualizer/SpectrumCanvas";
+import OrbViz from "../visualizer/OrbViz";
 
 export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const [queueOpen, setQueueOpen] = useState(false);
+  const skin = useTheme((s) => s.skin);
+  const I = {
+    play: iconFor(skin, "play"),
+    pause: iconFor(skin, "pause"),
+    prev: iconFor(skin, "prev"),
+    next: iconFor(skin, "next"),
+    shuffle: iconFor(skin, "shuffle"),
+    repeat: iconFor(skin, "repeat"),
+    repeat1: iconFor(skin, "repeat1"),
+    volume: iconFor(skin, "volume"),
+    queue: iconFor(skin, "queue"),
+    close: iconFor(skin, "close"),
+  };
   const {
     status, queue, index, position, duration, volume, muted,
     shuffle, repeat, togglePlay, next, prev, seek, setVolume, toggleShuffle, cycleRepeat, playQueueIndex,
   } = usePlayer();
-  const { vizStyle, vizIntensity, setVizStyle, setVizIntensity } = useUI();
+  const { vizIntensity, setVizIntensity } = useUI();
 
   const queuedId = index >= 0 && index < queue.length ? queue[index] : undefined;
   const track = useTrackById(queuedId);
@@ -33,8 +45,8 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0, scale: 1.03 }}
       transition={{ type: "spring", stiffness: 260, damping: 30 }}
     >
-      {/* Shader visualizer backdrop */}
-      <SpectrumCanvas style={vizStyle} intensity={vizIntensity} className="np-viz" />
+      {/* Orbkit shader backdrop — orb follows the active overhaul */}
+      <OrbViz intensity={vizIntensity} className="np-viz" />
 
       <div className="np-top">
         <button className="icon-btn" onClick={onClose} title="Close (⌘F)">
@@ -49,7 +61,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
             onClick={() => setQueueOpen((v) => !v)}
             title="Queue"
           >
-            <ListMusic size={17} />
+            <I.queue size={17} />
           </button>
         </div>
       </div>
@@ -60,8 +72,11 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
           style={{ background: isArtUrl(art) ? undefined : (art ?? "var(--surface-2)") }}
           layout
         >
-          {isArtUrl(art) && <img src={art} alt="" className="np-art-img" draggable={false} />}
-          <div className="np-art-orb" />
+          {isArtUrl(art) ? (
+            <img src={art} alt="" className="np-art-img" draggable={false} />
+          ) : (
+            <div className="np-art-orb" /> /* specular highlight only for placeholder art */
+          )}
           {track?.lossless && (
             <span className="np-lossless">
               LOSSLESS{track.sampleRate ? ` · ${(track.sampleRate / 1000).toFixed(1)}kHz` : ""}
@@ -100,28 +115,20 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
 
         <div className="np-controls">
           <button className={`icon-btn ${shuffle ? "toggled" : ""}`} onClick={toggleShuffle}>
-            <Shuffle size={17} />
+            <I.shuffle size={17} />
           </button>
-          <button className="icon-btn" onClick={prev}><SkipBack size={22} /></button>
+          <button className="icon-btn" onClick={prev}><I.prev size={22} /></button>
           <button className="np-play" onClick={togglePlay}>
-            {status === "playing" ? <Pause size={24} /> : <Play size={24} style={{ marginLeft: 3 }} />}
+            {status === "playing" ? <I.pause size={24} /> : <I.play size={24} style={{ marginLeft: 3 }} />}
           </button>
-          <button className="icon-btn" onClick={next}><SkipForward size={22} /></button>
+          <button className="icon-btn" onClick={next}><I.next size={22} /></button>
           <button className={`icon-btn ${repeat !== "off" ? "toggled" : ""}`} onClick={cycleRepeat}>
-            {repeat === "one" ? <Repeat1 size={17} /> : <Repeat size={17} />}
+            {repeat === "one" ? <I.repeat1 size={17} /> : <I.repeat size={17} />}
           </button>
         </div>
 
         <div className="np-viz-picker">
-          {(["orbs", "aurora", "rings"] as const).map((s) => (
-            <button
-              key={s}
-              className={`chip ${vizStyle === s ? "chip-active" : ""}`}
-              onClick={() => setVizStyle(s)}
-            >
-              {s}
-            </button>
-          ))}
+          <span className="text-faint np-viz-note">{album?.title ?? "Orb visualizer"}</span>
           <input
             type="range"
             min={0.2}
@@ -147,7 +154,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
           >
             <div className="np-queue-head">
               <span>Queue · {queue.length}</span>
-              <button className="icon-btn" onClick={() => setQueueOpen(false)}><X size={15} /></button>
+              <button className="icon-btn" onClick={() => setQueueOpen(false)}><I.close size={15} /></button>
             </div>
             <div className="np-queue-list">
               {queue.map((id, i) => {
@@ -175,7 +182,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
 
       {/* Volume pill bottom-left */}
       <div className="np-volume">
-        <Volume2 size={15} className="text-dim" />
+        <I.volume size={15} className="text-dim" />
         <input
           type="range"
           min={0}

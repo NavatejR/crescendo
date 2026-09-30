@@ -1,11 +1,9 @@
 import { useRef } from "react";
-import {
-  Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle,
-  Volume2, VolumeX, Maximize2, SlidersHorizontal, Heart,
-} from "lucide-react";
 import { usePlayer } from "../player/store";
 import { formatTime } from "../lib/mockLibrary";
 import { useTrackById, useAlbumById, isArtUrl } from "../lib/libraryStore";
+import { useTheme } from "../theme/store";
+import { iconFor } from "../theme/iconSet";
 import MiniOrb from "./MiniOrb";
 
 export default function Playbar({
@@ -16,6 +14,21 @@ export default function Playbar({
   onToggleEQ: () => void;
 }) {
   const barRef = useRef<HTMLDivElement>(null);
+  const skin = useTheme((s) => s.skin);
+  const I = {
+    shuffle: iconFor(skin, "shuffle"),
+    prev: iconFor(skin, "prev"),
+    play: iconFor(skin, "play"),
+    pause: iconFor(skin, "pause"),
+    next: iconFor(skin, "next"),
+    repeat: iconFor(skin, "repeat"),
+    repeat1: iconFor(skin, "repeat1"),
+    volume: iconFor(skin, "volume"),
+    mute: iconFor(skin, "mute"),
+    eq: iconFor(skin, "eq"),
+    expand: iconFor(skin, "expand"),
+    favorite: iconFor(skin, "favorite"),
+  };
   const {
     status, queue, index, position, duration, volume, muted,
     shuffle, repeat, togglePlay, next, prev, seek, setVolume,
@@ -53,7 +66,7 @@ export default function Playbar({
             {track ? `${track.artist} · ${album?.title ?? track.albumTitle ?? ""}` : "Pick a track to begin"}
           </span>
         </div>
-        <button className="icon-btn" title="Favorite"><Heart size={15} /></button>
+        <button className="icon-btn" title="Favorite"><I.favorite size={15} /></button>
       </div>
 
       {/* Center: transport + seek */}
@@ -64,19 +77,19 @@ export default function Playbar({
             onClick={toggleShuffle}
             title="Shuffle"
           >
-            <Shuffle size={15} />
+            <I.shuffle size={15} />
           </button>
-          <button className="icon-btn" onClick={prev} title="Previous"><SkipBack size={17} /></button>
+          <button className="icon-btn" onClick={prev} title="Previous"><I.prev size={17} /></button>
           <button className="pb-play" onClick={togglePlay} title="Play/Pause (Space)">
-            {status === "playing" ? <Pause size={19} /> : <Play size={19} style={{ marginLeft: 2 }} />}
+            {status === "playing" ? <I.pause size={19} /> : <I.play size={19} style={{ marginLeft: 2 }} />}
           </button>
-          <button className="icon-btn" onClick={next} title="Next"><SkipForward size={17} /></button>
+          <button className="icon-btn" onClick={next} title="Next"><I.next size={17} /></button>
           <button
             className={`icon-btn ${repeat !== "off" ? "toggled" : ""}`}
             onClick={cycleRepeat}
             title={`Repeat: ${repeat}`}
           >
-            {repeat === "one" ? <Repeat1 size={15} /> : <Repeat size={15} />}
+            {repeat === "one" ? <I.repeat1 size={15} /> : <I.repeat size={15} />}
           </button>
         </div>
         <div className="pb-seekrow">
@@ -97,7 +110,7 @@ export default function Playbar({
         <MiniOrb />
         <div className="pb-volume">
           <button className="icon-btn" onClick={toggleMute} title="Mute">
-            {muted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {muted || volume === 0 ? <I.mute size={16} /> : <I.volume size={16} />}
           </button>
           <input
             type="range"
@@ -111,10 +124,10 @@ export default function Playbar({
           />
         </div>
         <button className="icon-btn" onClick={onToggleEQ} title="Equalizer (⌘E)">
-          <SlidersHorizontal size={16} />
+          <I.eq size={16} />
         </button>
         <button className="icon-btn" onClick={onExpand} title="Full screen player (⌘F)">
-          <Maximize2 size={15} />
+          <I.expand size={15} />
         </button>
       </div>
     </footer>

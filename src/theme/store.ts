@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { SkinId, OverhaulId } from "./skins";
+import { SKINS, OVERHAULS, type SkinId, type OverhaulId } from "./skins";
 
 const LS_KEY = "crescendo.theme.v1";
 
@@ -14,13 +14,19 @@ interface ThemeState {
 }
 
 function load(): Pick<ThemeState, "skin" | "overhaul" | "accent"> {
+  const skinIds = SKINS.map((s) => s.id);
+  const overhaulIds = OVERHAULS.map((o) => o.id);
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) {
       const p = JSON.parse(raw) as Partial<ThemeState>;
+      // "liquid" was merged into "glass" (same idea, one overhaul).
+      const storedOverhaul = (p.overhaul as string) === "liquid" ? "glass" : p.overhaul;
       return {
-        skin: (p.skin as SkinId) || "material",
-        overhaul: (p.overhaul as OverhaulId) || "glass",
+        skin: skinIds.includes(p.skin as SkinId) ? (p.skin as SkinId) : "material",
+        overhaul: overhaulIds.includes(storedOverhaul as OverhaulId)
+          ? (storedOverhaul as OverhaulId)
+          : "glass",
         accent: p.accent ?? "",
       };
     }

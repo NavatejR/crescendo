@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import TitleBar from "./components/TitleBar";
+import Home from "./components/Home";
 import Sidebar from "./components/Sidebar";
 import Playbar from "./components/Playbar";
 import NowPlaying from "./components/NowPlaying";
@@ -11,15 +12,17 @@ import { usePlayer } from "./player/store";
 import { useLibrary } from "./lib/libraryStore";
 import { isNative } from "./lib/env";
 import { spectrum } from "./lib/spectrum";
+import { useTheme } from "./theme/store";
 
-export type ViewId = "albums" | "artists" | "tracks" | "folders" | "playlists" | "eq";
+export type ViewId = "home" | "albums" | "artists" | "tracks" | "folders" | "playlists" | "eq";
 
 export default function App() {
-  const [view, setView] = useState<ViewId>("albums");
+  const [view, setView] = useState<ViewId>("home");
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showEQ, setShowEQ] = useState(false);
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null);
+  const iconSkin = useTheme((s) => s.skin);
 
   // Load library (native DB or mock) once
   useEffect(() => {
@@ -108,7 +111,7 @@ export default function App() {
   const macOffset = isNative() && navigator.userAgent.includes("Macintosh");
 
   return (
-    <div className={`app-shell ${macOffset ? "titlebar-mac" : ""}`}>
+    <div className={`app-shell ${macOffset ? "titlebar-mac" : ""}`} data-icon-skin={iconSkin}>
       <TitleBar
         onOpenSettings={() => setShowSettings(true)}
         onToggleNowPlaying={() => setShowNowPlaying((v) => !v)}
@@ -121,7 +124,7 @@ export default function App() {
               Scanning library… {scan.done}/{scan.total}
             </div>
           )}
-          <Library view={view} />
+          {view === "home" ? <Home onView={setView} /> : <Library view={view} />}
         </main>
       </div>
       <Playbar

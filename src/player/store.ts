@@ -11,6 +11,8 @@ interface PlayerState {
   status: PlayerStatus;
   queue: string[];
   index: number;
+  /** Track ids started this session, most recent first ("Jump back in"). */
+  history: string[];
   position: number; // seconds
   duration: number;
   volume: number; // 0..1
@@ -85,6 +87,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
     status: "stopped",
     queue: [],
     index: -1,
+    history: [],
     position: 0,
     duration: 0,
     volume: 0.85,
@@ -106,6 +109,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         position: 0,
         duration: cur.duration ?? 0,
         status: "playing",
+        history: [cur.id, ...get().history.filter((h) => h !== cur.id)].slice(0, 12),
       });
       if (isNative()) {
         nativeQueueTracks = tracks;
@@ -120,7 +124,12 @@ export const usePlayer = create<PlayerState>((set, get) => {
     playQueueIndex: (i) => {
       const q = get().queue;
       if (i < 0 || i >= q.length) return;
-      set({ index: i, position: 0, status: "playing" });
+      set({
+        index: i,
+        position: 0,
+        status: "playing",
+        history: [q[i], ...get().history.filter((h) => h !== q[i])].slice(0, 12),
+      });
       if (isNative()) {
         native.play(q, i); // reload queue pointing at the chosen index
         ensureSync(set, get);

@@ -105,3 +105,27 @@
   --accent-rgb: 157 184 255;
   --accent-contrast: #101c46;
 }
+
+/* ---------- Per-skin icon character ---------- */
+/* Each skin re-weights and shapes the lucide icon set via SVG presentation
+   attributes on [data-icon-skin] containers (set on .app-shell). */
+[data-icon-skin="nothing"] svg {
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+[data-icon-skin="windows"] svg {
+  stroke-width: 1.6;
+}
+[data-icon-skin="oneui"] svg {
+  stroke-width: 2.2;
+}
+[data-icon-skin="material"] svg {
+  stroke-width: 2;
+}
+[data-icon-skin="liquid"] svg {
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.25));
+}

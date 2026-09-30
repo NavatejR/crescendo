@@ -1,15 +1,19 @@
 /* Skin & overhaul registries — the two axes of the theme system.
-   Skins own IDENTITY (colors + fonts). Overhauls own STRUCTURE
-   (radius, blur, borders, shadows, density). Any combination works. */
+   Skins own IDENTITY (colors + fonts + icon character). Overhauls own
+   STRUCTURE (shell layout, radius, blur, borders, shadows, density).
+   Any combination works. */
 
 export type SkinId = "material" | "nothing" | "windows" | "oneui" | "liquid";
-export type OverhaulId = "minimal" | "glass" | "liquid" | "brutal" | "maximal";
+export type OverhaulId = "minimal" | "glass" | "brutal" | "maximal";
+
+/** Visualizer shader per overhaul; "orbs" is the default/mini-orb shader. */
+export type VizStyle = "orbs" | OverhaulId;
 
 export interface SkinMeta {
   id: SkinId;
   name: string;
   tagline: string;
-  /** Miniature palette used by the settings thumbnail */
+  /** Miniature palette used by the settings thumbnail: [bg, accent, text] */
   swatch: [string, string, string];
 }
 
@@ -17,6 +21,8 @@ export interface OverhaulMeta {
   id: OverhaulId;
   name: string;
   tagline: string;
+  /** One-line summary of the structural personality, shown in Settings. */
+  structure: string;
 }
 
 export const SKINS: SkinMeta[] = [
@@ -28,11 +34,10 @@ export const SKINS: SkinMeta[] = [
 ];
 
 export const OVERHAULS: OverhaulMeta[] = [
-  { id: "minimal", name: "Minimalist", tagline: "Hairlines · quiet" },
-  { id: "glass", name: "Glassmorphism", tagline: "Frosted · glowing" },
-  { id: "liquid", name: "Liquid Glass", tagline: "Specular · Apple-style" },
-  { id: "brutal", name: "Brutalism", tagline: "Raw · hard shadows" },
-  { id: "maximal", name: "Maximalism", tagline: "Oversized · expressive" },
+  { id: "minimal", name: "Minimalism", tagline: "Hairlines · quiet", structure: "Icon rail, quiet grid, thin transport — everything else stays out of the way." },
+  { id: "glass", name: "Glassmorphism", tagline: "Frosted · glowing", structure: "Floating pill rail, frosted cards, roomy grid with a jump-back-in shelf." },
+  { id: "brutal", name: "Brutalism", tagline: "Raw · hard shadows", structure: "Boxed nav slabs, loud bordered blocks, squared command bar." },
+  { id: "maximal", name: "Maximalism", tagline: "Oversized · expressive", structure: "Featured hero albums, dense wall, wide navigation panel, big type." },
 ];
 
 export const ACCENTS: { name: string; value: string }[] = [
