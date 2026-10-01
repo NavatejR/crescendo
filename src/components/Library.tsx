@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
@@ -9,12 +9,49 @@ import { native } from "../lib/native";
 import { usePlayer } from "../player/store";
 import type { Album, Track } from "../lib/types";
 import ArtImage from "./ArtImage";
-import { PlaylistsView, AddToPlaylistDialog } from "./PlaylistsView";
+import { PlaylistsView } from "./PlaylistsView";
+import PlaylistPage, { AddToPlaylistDialog, type PlaylistRow } from "./PlaylistPage";
+import { Stagger, StaggerItem } from "./Reveal";
+
 
 export default function Library({ view }: { view: ViewId }) {
   const { tracks, albums, ready, native: nativeMode } = useLibrary();
   const { search, setSearch } = useUI();
   const playTrackList = usePlayer((s) => s.playTrackList);
+  const [openPlaylistId, setOpenPlaylistId] = useState<string | null>(null);
+  // Re-read the playlist from the DB after edits so the page always reflects it.
+  const [plVersion, setPlVersion] = useState(0);
+  const [openPlaylist, setOpenPlaylist] = useState<PlaylistRow | null>(null);
+
+  useEffect(() => {
+    // Back only clears the id, so drop the loaded playlist here — otherwise the
+    // page keeps rendering because `openPlaylist` is never refreshed on the way
+    // out. (React bails out when it is already null, so this is free.)
+    if (!openPlaylistId) {
+      setOpenPlaylist(null);
+      return;
+    }
+    if (!ready) return;
+    let alive = true;
+    native.listPlaylists().then((pls) => {
+      const found = pls?.find((p) => String(p.id) === openPlaylistId);
+      if (!alive) return;
+      if (found) {
+        setOpenPlaylist({
+          id: String(found.id),
+          name: found.name,
+          trackIds: found.trackIds.map(String),
+        });
+      } else {
+        // Deleted while open — fall back to the grid.
+        setOpenPlaylistId(null);
+        setOpenPlaylist(null);
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [openPlaylistId, plVersion, ready]);
 
   const q = search.trim().toLowerCase();
 
@@ -37,6 +74,14 @@ export default function Library({ view }: { view: ViewId }) {
 
   const skin = useTheme((s) => s.skin);
   const IRescan = iconFor(skin, "rescan");
+
+  // Leaving the playlists section closes any open playlist page.
+  useEffect(() => {
+    if (view !== "playlists") {
+      setOpenPlaylistId(null);
+      setOpenPlaylist(null);
+    }
+  }, [view]);
 
   if (!ready) {
     return (
@@ -90,7 +135,16 @@ export default function Library({ view }: { view: ViewId }) {
           {view === "artists" && <ArtistsView tracks={filteredTracks} onPlay={playTrackList} />}
           {view === "tracks" && <TracksView tracks={filteredTracks} onPlay={playTrackList} />}
           {view === "folders" && <FoldersView />}
-          {view === "playlists" && <PlaylistsView />}
+          {view === "playlists" &&
+            (openPlaylist ? (
+              <PlaylistPage
+                playlist={openPlaylist}
+                onBack={() => setOpenPlaylistId(null)}
+                onChanged={() => setPlVersion((v) => v + 1)}
+              />
+            ) : (
+              <PlaylistsView onOpen={(pl) => setOpenPlaylistId(pl.id)} />
+            ))}
           {view === "eq" && <EQView />}
         </motion.div>
       </AnimatePresence>
@@ -136,17 +190,15 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
   const skin = useTheme((s) => s.skin);
   const IPlay = iconFor(skin, "play");
   return (
-    <div className="album-grid">
-      {albums.map((al, i) => {
+    <Stagger className="album-grid" step={0.035}>
+      {albums.map((al) => {
         const tracks = allTracks.filter((t) => t.albumId === al.id);
         return (
+          <StaggerItem key={al.id}>
           <motion.div
-            key={al.id}
             className="album-card"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.03, 0.4), type: "spring", stiffness: 260, damping: 24 }}
             whileHover={{ y: -4 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="album-art" style={{ background: artBackground(al.art, al.artPalette) }}>
               {isArtUrl(al.art) && <ArtImage src={al.art} className="album-art-img" />}
@@ -157,9 +209,10 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
             <span className="album-title">{al.title}</span>
             <span className="album-artist text-dim">{al.artist}{al.year ? ` · ${al.year}` : ""}</span>
           </motion.div>
+          </StaggerItem>
         );
       })}
-    </div>
+    </Stagger>
   );
 }
 
@@ -177,14 +230,11 @@ function ArtistsView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[])
   }, [tracks]);
 
   return (
-    <div className="artist-list">
-      {byArtist.map(([artist, list], i) => (
+    <Stagger className="artist-list" step={0.04}>
+      {byArtist.map(([artist, list]) => (
+        <StaggerItem key={artist} y={0}>
         <motion.div
-          key={artist}
-          className="artist-row panel"
-          initial={{ opacity: 0, x: -14 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: Math.min(i * 0.04, 0.4) }}
+          className="artist-row panel lift"
         >
           <div className="artist-avatar">{artist.slice(0, 1).toUpperCase()}</div>
           <div className="artist-info">
@@ -195,8 +245,9 @@ function ArtistsView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[])
             <IPlay size={14} /> Play
           </button>
         </motion.div>
+        </StaggerItem>
       ))}
-    </div>
+    </Stagger>
   );
 }
 

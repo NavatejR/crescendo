@@ -28,6 +28,8 @@ interface PlayerState {
   playTrackList: (tracks: Track[], startIdx?: number) => void;
   /** Shuffle a list into the queue and start playing from the top. */
   playShuffled: (tracks: Track[]) => void;
+  /** Play one track from within a list, queueing the whole list. */
+  playIndex: (tracks: Track[], i: number) => void;
   playQueueIndex: (i: number) => void;
   togglePlay: () => void;
   next: () => void;
@@ -132,6 +134,12 @@ export const usePlayer = create<PlayerState>((set, get) => {
       }
       set({ shuffle: true });
       get().playTrackList(order, 0);
+    },
+
+    playIndex: (tracks, i) => {
+      // The list is already ordered; skip the shuffle roll in playTrackList.
+      set({ shuffle: false });
+      get().playTrackList(tracks, i);
     },
 
     playQueueIndex: (i) => {

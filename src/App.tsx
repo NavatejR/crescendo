@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import TitleBar from "./components/TitleBar";
 import Home from "./components/Home";
 import Sidebar from "./components/Sidebar";
@@ -23,6 +23,7 @@ export default function App() {
   const [showEQ, setShowEQ] = useState(false);
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null);
   const iconSkin = useTheme((s) => s.skin);
+  const reduceMotion = useReducedMotion() ?? false;
 
   // Load library (native DB or mock) once
   useEffect(() => {
@@ -124,7 +125,19 @@ export default function App() {
               Scanning library… {scan.done}/{scan.total}
             </div>
           )}
-          {view === "home" ? <Home onView={setView} /> : <Library view={view} />}
+          {/* Views cross-fade and lift so navigation reads as one continuous space. */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={view}
+              className="view-shell"
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {view === "home" ? <Home onView={setView} /> : <Library view={view} />}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
       <Playbar

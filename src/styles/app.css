@@ -54,8 +54,11 @@ body {
 }
 .panel-glass {
   background: var(--glass);
+  /* Author the standard property only: the build's vendor-prefix pass adds
+     the -webkit- alias itself and places it *before* this one. Hand-writing
+     the -webkit- twin makes the optimizer drop the standard property, which
+     kills the blur in every non-Safari engine (no frosted glass at all). */
   backdrop-filter: blur(var(--blur)) saturate(var(--blur-saturate));
-  -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--blur-saturate));
   border: var(--border-w) solid var(--border);
   border-radius: var(--radius-m);
   box-shadow: var(--shadow-rest), var(--hard-shadow);
@@ -94,6 +97,7 @@ body {
 }
 .btn:active {
   transform: scale(0.97);
+  transition-duration: var(--dur-1);
 }
 .btn-accent {
   background: var(--accent);
@@ -133,6 +137,8 @@ body {
 }
 .icon-btn:active {
   transform: scale(0.92);
+  background: var(--surface-2);
+  color: var(--text);
 }
 .icon-btn.toggled {
   color: var(--accent);
@@ -157,43 +163,37 @@ body {
   color: var(--text-faint);
 }
 
-/* ---- Ripple (Material state layer) ---- */
-.btn,
-.icon-btn,
-.chip,
-.pl-pick-row {
-  position: relative;
-  isolation: isolate;
+/* ---- Press feedback ----
+   Deliberately quiet: a small scale and a tone shift, with nothing that
+   animates on click. ---- */
+.btn:active,
+.chip:active,
+.pl-pick-row:active {
+  transform: scale(0.97);
 }
-.btn::after,
-.icon-btn::after,
-.chip::after,
-.side-item::after,
-.pl-pick-row::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: var(--ripple);
-  opacity: 0;
-  transform: scale(0);
-  pointer-events: none;
-  z-index: -1;
+.side-item:not(.side-item-active):active {
+  background: var(--surface-2);
 }
-.btn:active::after,
-.icon-btn:active::after,
-.chip:active::after,
-.side-item:active::after,
-.pl-pick-row:active::after {
-  animation: ripple-out 460ms cubic-bezier(0.2, 0, 0, 1);
+
+/* ---- Motion helpers ----
+   Shared easing so every overhaul moves with the same craft; each overhaul
+   only varies duration through --transition-*. ---- */
+.lift {
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
 }
-@keyframes ripple-out {
-  0% { opacity: 0.9; transform: scale(0); }
-  100% { opacity: 0; transform: scale(26); }
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-pop);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lift,
+  .lift:hover {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* ---- Dot matrix (NothingOS flavor + decorative backdrops) ---- */

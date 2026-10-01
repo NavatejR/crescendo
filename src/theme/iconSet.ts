@@ -16,7 +16,7 @@ import {
   Volume1, Volume2, VolumeX,
   Heart, X, Power, Plus,
   Clock, Clock3,
-  Palette, Info, Check,
+  Palette, Info, Check, ChevronDown,
 } from "lucide-react";
 import type { SkinId } from "./skins";
 import { useTheme } from "./store";
@@ -38,7 +38,7 @@ export type IconName =
   | "volume" | "mute" | "favorite"
   | "queue" | "close" | "power" | "plus"
   | "clock" | "folderOpen" | "rescan"
-  | "palette" | "sparkles" | "info" | "check" | "disc";
+  | "palette" | "sparkles" | "info" | "check" | "disc" | "back";
 
 /**
  * Per-skin icon sets. Every variant stays semantically true to its action —
@@ -56,6 +56,7 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     volume: Volume2, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
     rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Disc3,
+    back: ChevronDown,
   },
 
   /* NothingOS: geometric, framed, technical */
@@ -68,6 +69,7 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     volume: Volume1, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock, folderOpen: FolderOpen,
     rescan: RefreshCcw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Orbit,
+    back: ChevronDown,
   },
 
   /* Windows 11: Fluent-style, slightly condensed */
@@ -80,6 +82,7 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     volume: Volume2, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
     rescan: RefreshCcw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Disc,
+    back: ChevronDown,
   },
 
   /* One UI: minimal, thin, Samsung-style */
@@ -92,6 +95,7 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     volume: Volume1, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock3, folderOpen: FolderOpen,
     rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: CircleDot,
+    back: ChevronDown,
   },
 
   /* Liquid Glass: expressive but true to meaning */
@@ -104,6 +108,7 @@ const ICON_SETS: Record<SkinId, Record<IconName, IconCmp>> = {
     volume: Volume2, mute: VolumeX, favorite: Heart, queue: ListMusic,
     close: X, power: Power, plus: Plus, clock: Clock, folderOpen: FolderOpen,
     rescan: RefreshCw, palette: Palette, sparkles: Sparkles, info: Info, check: Check, disc: Orbit,
+    back: ChevronDown,
   },
 };
 

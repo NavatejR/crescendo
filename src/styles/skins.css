@@ -55,7 +55,6 @@
   --transition-spring: 210ms cubic-bezier(0.2, 0, 0, 1);
   --nav-active-bg: rgb(var(--accent-rgb) / 0.16);
   --nav-active-fg: #ffffff;
-  --ripple: rgb(var(--accent-rgb) / 0.22);
 }
 /* NothingOS stays strictly outlined — never a tonal fill. */
 [data-skin="nothing"] svg {

@@ -72,7 +72,20 @@
   --nav-active-bg: rgb(var(--accent-rgb) / 0.18);
   --nav-active-fg: var(--text);
   --nav-active-icon: var(--accent);
-  --ripple: rgb(var(--accent-rgb) / 0.28);
+
+  /* ---- Paper / ink inversion (used by brutalism's statement surfaces) ----
+     Derived from the skin so "paper" is whatever the skin calls its
+     foreground color — overhauls never hardcode a palette. */
+  --paper: var(--text);
+  --paper-ink: var(--bg);
+
+  /* ---- Motion ---- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring-soft: cubic-bezier(0.34, 1.32, 0.64, 1);
+  --dur-1: 140ms;
+  --dur-2: 260ms;
+  --dur-3: 420ms;
+  --reveal-shift: 14px;
 }
 
 @media (prefers-reduced-motion: reduce) {

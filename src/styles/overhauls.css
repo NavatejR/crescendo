@@ -1,84 +1,97 @@
 /* ==========================================================================
    OVERHAULS — structure axis: shape, blur, borders, shadows, density,
-   decorative effects. [data-overhaul="…"] on <html>. Font-agnostic.
+   decorative effects, motion pacing. [data-overhaul="…"] on <html>.
+   Font- and color-agnostic: every color resolves through skin tokens.
    ========================================================================== */
 
-/* ---- Minimal — hairlines, quiet surfaces, tight rhythm ---- */
+/* ---- Minimalism — hairlines, no shadows, whitespace does the work ---- */
 [data-overhaul="minimal"] {
-  --radius-s: 8px;
-  --radius-m: 12px;
-  --radius-l: 16px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
   --border-w: 1px;
-  --border-alpha: 0.07;
-  --surface-alpha: 0.035;
-  --surface-2-alpha: 0.06;
+  --border-alpha: 0.08;
+  --surface-alpha: 0.03;
+  --surface-2-alpha: 0.055;
   --blur: 0px;
   --blur-saturate: 100%;
   --shadow-rest: none;
-  --shadow-pop: 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 10px 26px rgb(0 0 0 / 0.3);
   --hard-shadow: none;
   --sheen: none;
-  --density: 0.92;
+  --density: 0.94;
+  --type-scale: 0.98;
+  /* Quiet, precise motion */
+  --transition-fast: 130ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.14);
+  --nav-active-fg: var(--text);
 }
 
-/* ---- Glassmorphism — frosted panels, soft glow ---- */
+/* ---- Glassmorphism — real depth: layered gradient light + frosted panes ---- */
 [data-overhaul="glass"] {
   --radius-s: 12px;
-  --radius-m: 18px;
-  --radius-l: 26px;
+  --radius-m: 20px;
+  --radius-l: 28px;
   --border-w: 1px;
-  --border-alpha: 0.1;
-  --surface-alpha: 0.06;
-  --surface-2-alpha: 0.1;
-  --blur: 28px;
-  --blur-saturate: 160%;
-  --shadow-rest: 0 10px 34px rgb(0 0 0 / 0.3);
-  --shadow-pop: 0 20px 60px rgb(0 0 0 / 0.45);
+  --border-alpha: 0.14;
+  --surface-alpha: 0.07;
+  --surface-2-alpha: 0.12;
+  --blur: 30px;
+  --blur-saturate: 175%;
+  --shadow-rest: 0 12px 36px rgb(0 0 0 / 0.34);
+  --shadow-pop: 0 26px 70px rgb(0 0 0 / 0.5);
   --sheen: none;
-  --density: 1;
+  --density: 1.02;
+  --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 320ms cubic-bezier(0.16, 1, 0.3, 1);
   --nav-active-bg: rgb(var(--accent-rgb) / 0.2);
+  --nav-active-fg: var(--text);
 }
 
-/* ---- Brutalism — ink & bone, black offset shadows, zero blur.
-   Accent is reserved for the active state; structure carries the style. ---- */
+/* ---- Brutalism — exposed structure, hard edges, loud statement blocks.
+   The page stays the skin's dark canvas; "paper" tiles invert the skin's
+   own foreground/background rather than hardcoding bone. ---- */
 [data-overhaul="brutal"] {
-  --outline: 232 227 216;        /* bone, not pure white */
-  --border-w: 1.5px;
-  --border-alpha: 0.5;
-  --surface-alpha: 0.045;
-  --surface-2-alpha: 0.08;
+  --border-w: 2px;
+  --border-alpha: 0.55;
+  --surface-alpha: 0.04;
+  --surface-2-alpha: 0.075;
   --blur: 0px;
   --blur-saturate: 100%;
   --shadow-rest: 3px 3px 0 rgb(0 0 0 / 0.85);
-  --shadow-pop: 6px 6px 0 rgb(0 0 0 / 0.9);
+  --shadow-pop: 7px 7px 0 rgb(0 0 0 / 0.9);
   --hard-shadow: 3px 3px 0 rgb(0 0 0 / 0.85);
   --sheen: none;
-  --density: 1.05;
-  --tracking-display: 0.08em;
-  --type-scale: 1.05;
-  /* A bold accent slab, but the label stays light — a solid fill with
-     dark ink made the selected page hard to read. */
-  --nav-active-bg: rgb(var(--accent-rgb) / 0.34);
+  --density: 1.06;
+  --tracking-display: 0.07em;
+  --type-scale: 1.08;
+  /* Instant, mechanical */
+  --transition-fast: 110ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-base: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.32);
   --nav-active-fg: var(--text);
   --nav-active-icon: var(--accent);
 }
 
-/* ---- Maximalism — oversized radii, dense stages, big type ---- */
+/* ---- Maximalism — generous radii, tonal blocks, big friendly numerals ---- */
 [data-overhaul="maximal"] {
   --radius-s: 14px;
-  --radius-m: 24px;
-  --radius-l: 34px;
-  --border-w: 1.5px;
-  --border-alpha: 0.14;
-  --surface-alpha: 0.09;
-  --surface-2-alpha: 0.14;
-  --blur: 34px;
-  --blur-saturate: 170%;
-  --shadow-rest: 0 14px 44px rgb(0 0 0 / 0.38);
-  --shadow-pop: 0 26px 80px rgb(0 0 0 / 0.55);
+  --radius-m: 26px;
+  --radius-l: 36px;
+  --border-w: 1px;
+  --border-alpha: 0.1;
+  --surface-alpha: 0.085;
+  --surface-2-alpha: 0.13;
+  --blur: 26px;
+  --blur-saturate: 160%;
+  --shadow-rest: 0 16px 48px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 30px 90px rgb(0 0 0 / 0.55);
   --sheen: linear-gradient(120deg, rgb(var(--accent-rgb) / 0.12), transparent 45%, rgb(var(--accent-rgb) / 0.08));
-  --density: 1.18;
-  --type-scale: 1.14;
-  --nav-active-bg: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.24), transparent 85%);
+  --density: 1.2;
+  --type-scale: 1.16;
+  --transition-fast: 200ms cubic-bezier(0.34, 1.32, 0.64, 1);
+  --transition-base: 360ms cubic-bezier(0.34, 1.32, 0.64, 1);
+  --nav-active-bg: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.26), transparent 88%);
   --nav-active-fg: var(--accent);
 }

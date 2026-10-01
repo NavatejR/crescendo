@@ -7,6 +7,7 @@ import { useIcon } from "../theme/iconSet";
 import type { Track } from "../lib/types";
 import type { ViewId } from "../App";
 import ArtImage from "./ArtImage";
+import { AnimatedNumber, Stagger, StaggerItem } from "./Reveal";
 
 /**
  * Populated home experience: a jump-back-in shelf, artist chips, library
@@ -70,11 +71,11 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
         </motion.h1>
         {!isMinimal && (
           <div className="home-stats text-faint">
-            <span><b>{stats.tracks}</b> tracks</span>
+            <span><b><AnimatedNumber value={stats.tracks} /></b> tracks</span>
             <i />
-            <span><b>{stats.albums}</b> albums</span>
+            <span><b><AnimatedNumber value={stats.albums} /></b> albums</span>
             <i />
-            <span><b>{stats.hours}</b> hours</span>
+            <span><b><AnimatedNumber value={stats.hours} decimals={1} /></b> hours</span>
           </div>
         )}
       </header>
@@ -93,16 +94,13 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
           <div className="home-sec-head">
             <span className="home-sec-title"><Iclock size={14} /> Jump back in</span>
           </div>
-          <div className="home-recent">
+          <Stagger className="home-recent" step={0.045}>
             {recent.slice(0, 8).map((t, i) => (
+              <StaggerItem key={t.id}>
               <motion.button
-                key={t.id}
                 className="home-recent-card"
                 style={{ background: artBackground(t.art, t.artPalette) }}
                 onClick={() => playTrackList(recent, i)}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.04, 0.3), type: "spring", stiffness: 260, damping: 24 }}
                 whileHover={{ y: -4 }}
                 title={`Play ${t.title}`}
               >
@@ -111,8 +109,9 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
                 <span className="home-recent-title">{t.title}</span>
                 <span className="home-recent-artist text-dim">{t.artist}</span>
               </motion.button>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </section>
       )}
 
@@ -121,13 +120,15 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
           <div className="home-sec-head">
             <span className="home-sec-title">Artists</span>
           </div>
-          <div className="home-chips">
+          <Stagger className="home-chips" step={0.03}>
             {artists.map(([name]) => (
-              <button key={name} className="home-chip" onClick={() => onView("artists")}>
-                {name}
-              </button>
+              <StaggerItem key={name} y={8}>
+                <button className="home-chip" onClick={() => onView("artists")}>
+                  {name}
+                </button>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </section>
       )}
 
@@ -138,14 +139,16 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
             All albums →
           </button>
         </div>
-        <div className="album-grid">
-          {featured.map((al, i) => {
+        <Stagger className="album-grid" step={0.04}>
+          {featured.map((al) => {
             const albumTracks = byAlbum.get(al.id) ?? [];
             return (
-              <AlbumCard key={al.id} album={al} index={i} tracks={albumTracks} onPlay={playTrackList} />
+              <StaggerItem key={al.id}>
+                <AlbumCard album={al} tracks={albumTracks} onPlay={playTrackList} />
+              </StaggerItem>
             );
           })}
-        </div>
+        </Stagger>
       </section>
     </div>
   );
@@ -153,10 +156,9 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
 
 /* Album card shared with the Albums view (kept visually identical). */
 function AlbumCard({
-  album, index, tracks, onPlay,
+  album, tracks, onPlay,
 }: {
   album: ReturnType<typeof useLibrary.getState>["albums"][number];
-  index: number;
   tracks: Track[];
   onPlay: (t: Track[]) => void;
 }) {
@@ -164,10 +166,8 @@ function AlbumCard({
   return (
     <motion.div
       className="album-card"
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.03, 0.4), type: "spring", stiffness: 260, damping: 24 }}
       whileHover={{ y: -4 }}
+      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="album-art" style={{ background: artBackground(album.art, album.artPalette) }}>
         {isArtUrl(album.art) && <ArtImage src={album.art} className="album-art-img" />}
