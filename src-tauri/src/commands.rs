@@ -303,6 +303,13 @@ pub fn playlist_remove_track(db: State<'_, DbState>, playlist_id: i64, track_id:
     db::remove_from_playlist(&conn, playlist_id, track_id);
 }
 
+/// Remove duplicate occurrences of the same track from a playlist.
+#[tauri::command]
+pub fn playlist_dedupe(db: State<'_, DbState>, id: i64) -> usize {
+    let conn = db.0.lock();
+    db::dedupe_playlist(&conn, id)
+}
+
 /// Watch a folder and add every track inside it to a playlist. Scans
 /// synchronously (off the main thread) so the returned count is accurate.
 #[tauri::command]

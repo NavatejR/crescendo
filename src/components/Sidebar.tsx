@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import type { ViewId } from "../App";
 import { usePlayer } from "../player/store";
 import { useTheme } from "../theme/store";
@@ -34,6 +35,13 @@ export default function Sidebar({
               className={`side-item ${view === id ? "side-item-active" : ""}`}
               onClick={() => onView(id)}
             >
+              {view === id && (
+                <motion.span
+                  layoutId="nav-indicator"
+                  className="side-indicator"
+                  transition={{ type: "spring", stiffness: 520, damping: 38, mass: 0.8 }}
+                />
+              )}
               <Icon size={17} />
               <span>{label}</span>
               {id === "eq" && playing && (

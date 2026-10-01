@@ -26,6 +26,8 @@ interface PlayerState {
   treble: number;
   // actions
   playTrackList: (tracks: Track[], startIdx?: number) => void;
+  /** Shuffle a list into the queue and start playing from the top. */
+  playShuffled: (tracks: Track[]) => void;
   playQueueIndex: (i: number) => void;
   togglePlay: () => void;
   next: () => void;
@@ -119,6 +121,17 @@ export const usePlayer = create<PlayerState>((set, get) => {
         ensureSim();
         spectrum.playing = true;
       }
+    },
+
+    playShuffled: (tracks) => {
+      if (tracks.length === 0) return;
+      const order = [...tracks];
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      set({ shuffle: true });
+      get().playTrackList(order, 0);
     },
 
     playQueueIndex: (i) => {

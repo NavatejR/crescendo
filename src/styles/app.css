@@ -157,6 +157,45 @@ body {
   color: var(--text-faint);
 }
 
+/* ---- Ripple (Material state layer) ---- */
+.btn,
+.icon-btn,
+.chip,
+.pl-pick-row {
+  position: relative;
+  isolation: isolate;
+}
+.btn::after,
+.icon-btn::after,
+.chip::after,
+.side-item::after,
+.pl-pick-row::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--ripple);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+  z-index: -1;
+}
+.btn:active::after,
+.icon-btn:active::after,
+.chip:active::after,
+.side-item:active::after,
+.pl-pick-row:active::after {
+  animation: ripple-out 460ms cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes ripple-out {
+  0% { opacity: 0.9; transform: scale(0); }
+  100% { opacity: 0; transform: scale(26); }
+}
+
 /* ---- Dot matrix (NothingOS flavor + decorative backdrops) ---- */
 .dot-grid {
   background-image: radial-gradient(rgb(var(--dot-color) / var(--dot-strength)) 1px, transparent 1px);

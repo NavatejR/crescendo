@@ -65,6 +65,14 @@
   --accent-glow: rgb(var(--accent-rgb) / 0.45);
   --text-on-accent: var(--accent-contrast);
   --glass: rgb(var(--bg-elev-rgb) / 0.62);
+
+  /* ---- Selected navigation state ----
+     Kept readable in every skin × overhaul: a tinted fill with full-brightness
+     label text. Overhauls that want a solid fill override both tokens. */
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.18);
+  --nav-active-fg: var(--text);
+  --nav-active-icon: var(--accent);
+  --ripple: rgb(var(--accent-rgb) / 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {

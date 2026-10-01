@@ -5,6 +5,7 @@ import { iconFor } from "../theme/iconSet";
 import { useLibrary, isArtUrl } from "../lib/libraryStore";
 import { native } from "../lib/native";
 import { formatTime } from "../lib/mockLibrary";
+import { usePlayer } from "../player/store";
 import type { Track } from "../lib/types";
 import ArtImage from "./ArtImage";
 
@@ -19,6 +20,14 @@ function toRows(
 ): PlaylistRow[] {
   if (!pls) return [];
   return pls.map((p) => ({ id: String(p.id), name: p.name, trackIds: p.trackIds.map(String) }));
+}
+
+/** Human total length: "42 min" or "1 hr 12 min". */
+function formatTotal(secs: number): string {
+  if (!secs) return "0 min";
+  const h = Math.floor(secs / 3600);
+  const m = Math.round((secs % 3600) / 60);
+  return h > 0 ? `${h} hr ${m} min` : `${m} min`;
 }
 
 /** 2×2 mosaic of the first tracks' artwork. */
@@ -44,10 +53,13 @@ function PlaylistArt({ tracks }: { tracks: Track[] }) {
   );
 }
 
-export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void }) {
+export function PlaylistsView() {
   const allTracks = useLibrary((s) => s.tracks);
   const refreshLibrary = useLibrary((s) => s.refresh);
   const ready = useLibrary((s) => s.ready);
+  const playTrackList = usePlayer((s) => s.playTrackList);
+  const playShuffled = usePlayer((s) => s.playShuffled);
+
   const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -59,8 +71,9 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
   const skin = useTheme((s) => s.skin);
   const IPlay = iconFor(skin, "play");
   const IPlus = iconFor(skin, "plus");
-  const IFolder = iconFor(skin, "folderOpen");
   const IListMusic = iconFor(skin, "playlists");
+  const IShuffle = iconFor(skin, "shuffle");
+  const IExpand = iconFor(skin, "expand");
   const IClose = iconFor(skin, "close");
 
   const load = async () => setPlaylists(toRows(await native.listPlaylists()));
@@ -121,6 +134,14 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
     await load();
   }
 
+  async function dedupe(playlistId: string) {
+    const removed = await native.dedupePlaylist(Number(playlistId));
+    await load();
+    setNotice(
+      removed ? `Removed ${removed} duplicate${removed === 1 ? "" : "s"}` : "No duplicates found",
+    );
+  }
+
   const open = playlists.find((p) => p.id === openId) ?? null;
   const picker = playlists.find((p) => p.id === pickerId) ?? null;
 
@@ -130,6 +151,7 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
       <div className="pl-grid">
         {playlists.map((pl, i) => {
           const tracks = tracksOf(pl);
+          const total = tracks.reduce((s, t) => s + (t.duration ?? 0), 0);
           return (
             <motion.div
               key={pl.id}
@@ -139,24 +161,17 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
               transition={{ delay: i * 0.05 }}
               whileHover={{ y: -3 }}
             >
-              <button
-                type="button"
-                className="pl-art"
-                onClick={() => setOpenId(pl.id)}
-                title={`Open ${pl.name}`}
-              >
-                <PlaylistArt tracks={tracks} />
-              </button>
-              <button type="button" className="pl-name pl-name-btn" onClick={() => setOpenId(pl.id)}>
-                {pl.name}
-              </button>
-              <span className="text-faint">{pl.trackIds.length} tracks</span>
-              <div className="pl-actions">
-                <button className="btn" onClick={() => onPlay(tracks)} disabled={!tracks.length}>
-                  <IPlay size={13} /> Play
+              <div className="pl-art-wrap">
+                <button
+                  type="button"
+                  className="pl-art"
+                  onClick={() => setOpenId(pl.id)}
+                  title={`Open ${pl.name}`}
+                >
+                  <PlaylistArt tracks={tracks} />
                 </button>
                 <button
-                  className="icon-btn"
+                  className="icon-btn pl-del"
                   title="Delete playlist"
                   onClick={async () => {
                     await native.deletePlaylist(Number(pl.id));
@@ -166,25 +181,30 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
                   <IClose size={14} />
                 </button>
               </div>
-              <div className="pl-btns">
-                <button className="btn" onClick={() => setPickerId(pl.id)} title="Add from library">
-                  <IPlus size={13} /> Add
+              <button type="button" className="pl-name pl-name-btn" onClick={() => setOpenId(pl.id)}>
+                {pl.name}
+              </button>
+              <span className="pl-meta text-faint">
+                {pl.trackIds.length} tracks · {formatTotal(total)}
+              </span>
+              <div className="pl-actions">
+                <button
+                  className="btn btn-accent"
+                  onClick={() => playTrackList(tracks)}
+                  disabled={!tracks.length}
+                >
+                  <IPlay size={13} /> Play
                 </button>
                 <button
                   className="btn"
-                  onClick={() => importFiles(pl.id)}
-                  disabled={busy}
-                  title="Import music files"
+                  onClick={() => playShuffled(tracks)}
+                  disabled={!tracks.length}
+                  title="Shuffle play"
                 >
-                  <IPlus size={13} /> Files
+                  <IShuffle size={13} /> Shuffle
                 </button>
-                <button
-                  className="btn"
-                  onClick={() => addFolder(pl.id)}
-                  disabled={busy}
-                  title="Add a folder of music"
-                >
-                  <IFolder size={13} /> Folder
+                <button className="btn" onClick={() => setOpenId(pl.id)}>
+                  <IExpand size={13} /> Open
                 </button>
               </div>
             </motion.div>
@@ -212,8 +232,7 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
         )}
       </div>
       <div className="pl-hint text-faint">
-        <IListMusic size={13} /> Open a playlist to manage it · Add from your library, import files,
-        or pull in a whole folder.
+        <IListMusic size={13} /> Open a playlist to add tracks, import files or pull in a folder.
       </div>
 
       <AnimatePresence>
@@ -235,8 +254,14 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
             key="detail"
             playlist={open}
             tracks={tracksOf(open)}
+            busy={busy}
             onClose={() => setOpenId(null)}
-            onPlay={onPlay}
+            onPlayAll={() => playTrackList(tracksOf(open))}
+            onShuffle={() => playShuffled(tracksOf(open))}
+            onAdd={() => setPickerId(open.id)}
+            onFiles={() => importFiles(open.id)}
+            onFolder={() => addFolder(open.id)}
+            onDedupe={() => dedupe(open.id)}
             onRemove={(tid) => removeTrack(open.id, tid)}
           />
         )}
@@ -249,19 +274,36 @@ export function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) =
 function PlaylistDetail({
   playlist,
   tracks,
+  busy,
   onClose,
-  onPlay,
+  onPlayAll,
+  onShuffle,
+  onAdd,
+  onFiles,
+  onFolder,
+  onDedupe,
   onRemove,
 }: {
   playlist: PlaylistRow;
   tracks: Track[];
+  busy: boolean;
   onClose: () => void;
-  onPlay: (t: Track[]) => void;
+  onPlayAll: () => void;
+  onShuffle: () => void;
+  onAdd: () => void;
+  onFiles: () => void;
+  onFolder: () => void;
+  onDedupe: () => void;
   onRemove: (trackId: string) => void;
 }) {
   const skin = useTheme((s) => s.skin);
   const IPlay = iconFor(skin, "play");
+  const IPlus = iconFor(skin, "plus");
+  const IFolder = iconFor(skin, "folderOpen");
+  const IShuffle = iconFor(skin, "shuffle");
   const IClose = iconFor(skin, "close");
+
+  const total = tracks.reduce((s, t) => s + (t.duration ?? 0), 0);
 
   return (
     <motion.div
@@ -281,17 +323,39 @@ function PlaylistDetail({
       >
         <div className="pl-modal-head">
           <h2>{playlist.name}</h2>
-          <span className="text-faint">{tracks.length} tracks</span>
-          <button className="btn" onClick={() => onPlay(tracks)} disabled={!tracks.length}>
-            <IPlay size={13} /> Play all
-          </button>
+          <span className="text-faint">
+            {tracks.length} tracks · {formatTotal(total)}
+          </span>
           <button className="icon-btn" onClick={onClose}>
             <IClose size={16} />
           </button>
         </div>
+
+        {/* One consistent button row — every action lives here, not on the card. */}
+        <div className="pl-modal-tools">
+          <button className="btn btn-accent" onClick={onPlayAll} disabled={!tracks.length}>
+            <IPlay size={14} /> Play all
+          </button>
+          <button className="btn" onClick={onShuffle} disabled={!tracks.length}>
+            <IShuffle size={14} /> Shuffle
+          </button>
+          <button className="btn" onClick={onAdd}>
+            <IPlus size={14} /> Add tracks
+          </button>
+          <button className="btn" onClick={onFiles} disabled={busy}>
+            <IPlus size={14} /> Files
+          </button>
+          <button className="btn" onClick={onFolder} disabled={busy}>
+            <IFolder size={14} /> Folder
+          </button>
+          <button className="btn" onClick={onDedupe} disabled={!tracks.length}>
+            Clean up
+          </button>
+        </div>
+
         <div className="pl-track-list">
           {tracks.map((t, i) => (
-            <div key={t.id} className="pl-track-row">
+            <div key={`${t.id}-${i}`} className="pl-track-row">
               <span className="pl-track-num text-faint">{i + 1}</span>
               <div className="pl-track-art">
                 {isArtUrl(t.art) ? (
@@ -315,7 +379,9 @@ function PlaylistDetail({
             </div>
           ))}
           {tracks.length === 0 && (
-            <p className="text-faint pl-empty">Empty — add tracks, import files, or pull in a folder.</p>
+            <p className="text-faint pl-empty">
+              Empty — use <b>Add tracks</b>, <b>Files</b> or <b>Folder</b> above.
+            </p>
           )}
         </div>
       </motion.div>
@@ -323,7 +389,7 @@ function PlaylistDetail({
   );
 }
 
-/* ---------------- Library track picker ---------------- */
+/* ---------------- Library track picker (multi-select) ---------------- */
 function TrackPicker({
   playlist,
   allTracks,
@@ -343,6 +409,11 @@ function TrackPicker({
   const ICheck = iconFor(skin, "check");
 
   const existing = useMemo(() => new Set(playlist.trackIds), [playlist.trackIds]);
+
+  const selectable = useMemo(
+    () => allTracks.filter((t) => !existing.has(t.id)),
+    [allTracks, existing],
+  );
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -385,13 +456,23 @@ function TrackPicker({
           <h2>Add to “{playlist.name}”</h2>
           <span className="text-faint">{sel.size} selected</span>
           <button
+            className="btn"
+            onClick={() => setSel(new Set(selectable.map((t) => t.id)))}
+            disabled={!selectable.length}
+          >
+            Select all
+          </button>
+          <button className="btn" onClick={() => setSel(new Set())} disabled={!sel.size}>
+            Clear
+          </button>
+          <button
             className="btn btn-accent"
             onClick={() => onConfirm([...sel])}
             disabled={sel.size === 0}
           >
             Add {sel.size || ""}
           </button>
-          <button className="icon-btn" onClick={onClose}>
+          <button className="icon-btn" onClick={onClose} title="Close">
             <IClose size={16} />
           </button>
         </div>
@@ -404,7 +485,7 @@ function TrackPicker({
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="pl-track-list">
+        <div className="pl-track-list pl-track-list-pick">
           {filtered.map((t) => {
             const inList = existing.has(t.id);
             const picked = sel.has(t.id);
@@ -487,7 +568,7 @@ export function AddToPlaylistDialog({ trackId, onClose }: { trackId: string; onC
             <IClose size={16} />
           </button>
         </div>
-        <div className="pl-track-list">
+        <div className="pl-track-list pl-track-list-pick">
           {playlists.map((pl) => (
             <button
               key={pl.id}
@@ -504,7 +585,9 @@ export function AddToPlaylistDialog({ trackId, onClose }: { trackId: string; onC
               {done === pl.id && <span className="text-faint">Added ✓</span>}
             </button>
           ))}
-          {playlists.length === 0 && <p className="text-faint pl-empty">No playlists yet — create one below.</p>}
+          {playlists.length === 0 && (
+            <p className="text-faint pl-empty">No playlists yet — create one below.</p>
+          )}
         </div>
         <div className="pl-picker-search">
           <IPlus size={14} className="text-faint" />

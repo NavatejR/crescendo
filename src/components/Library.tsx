@@ -90,7 +90,7 @@ export default function Library({ view }: { view: ViewId }) {
           {view === "artists" && <ArtistsView tracks={filteredTracks} onPlay={playTrackList} />}
           {view === "tracks" && <TracksView tracks={filteredTracks} onPlay={playTrackList} />}
           {view === "folders" && <FoldersView />}
-          {view === "playlists" && <PlaylistsView onPlay={playTrackList} />}
+          {view === "playlists" && <PlaylistsView />}
           {view === "eq" && <EQView />}
         </motion.div>
       </AnimatePresence>

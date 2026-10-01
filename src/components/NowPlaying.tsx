@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { ChevronDown, Disc3 } from "lucide-react";
 import { usePlayer } from "../player/store";
 import { useTheme } from "../theme/store";
@@ -12,6 +12,7 @@ import ArtImage from "./ArtImage";
 
 export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const [queueOpen, setQueueOpen] = useState(false);
+  const reduce = useReducedMotion() ?? false;
   const skin = useTheme((s) => s.skin);
   const I = {
     play: iconFor(skin, "play"),
@@ -41,23 +42,44 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
 
   // Palette-derived gradient shown beneath cover art (and as its fallback).
   const artBase = artBackground(art, palette);
+  // Keys that drive the change transitions.
+  const trackKey = track?.id ?? "none";
+  const albumKey = album?.id ?? "none";
+
+  // Duration-based tweens (not springs): they are compositor-accelerated, so a
+  // change of song completes even when the frame loop is busy or throttled.
+  const artTransition = reduce ? { duration: 0 } : { duration: 0.42, ease: [0.22, 1, 0.36, 1] as const };
+  const infoTransition = reduce ? { duration: 0 } : { duration: 0.3, ease: [0.32, 0.72, 0, 1] as const };
 
   return (
     <motion.div
       className="np np-opaque"
       initial={{ opacity: 0, scale: 1.04 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.03 }}
-      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.03 }}
+      transition={reduce ? { duration: 0 } : { duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Lava-lamp backdrop built from the album's cover palette */}
-      <LavaGradient
-        palette={palette}
-        seed={album?.id ?? "np"}
-        intensity={vizIntensity}
-        active={status === "playing"}
-        className="np-viz"
-      />
+      {/* Lava-lamp backdrop — crossfades as the playing album's palette changes */}
+      <div className="np-viz-stack">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={albumKey}
+            className="np-viz-layer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduce ? 0 : 1.1, ease: "easeInOut" }}
+          >
+            <LavaGradient
+              palette={palette}
+              seed={album?.id ?? "np"}
+              intensity={vizIntensity}
+              active={status === "playing"}
+              className="np-viz"
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       <div className="np-top">
         <button className="icon-btn" onClick={onClose} title="Close (⌘F)">
@@ -78,35 +100,65 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="np-stage">
-        <motion.div
-          className={`np-art ${status === "playing" ? "np-art-playing" : ""}`}
-          style={{ background: isArtUrl(art) ? artBase : (art ?? artBase) }}
-          layout
-        >
-          {isArtUrl(art) ? (
-            <ArtImage src={art} className="np-art-img" />
-          ) : (
-            <div className="np-art-orb" /> /* specular highlight only for placeholder art */
-          )}
-          {track?.lossless && (
-            <span className="np-lossless">
-              LOSSLESS{track.sampleRate ? ` · ${(track.sampleRate / 1000).toFixed(1)}kHz` : ""}
-              {track.bitDepth ? ` · ${track.bitDepth}-bit` : ""}
-            </span>
-          )}
-        </motion.div>
+        <div className="np-art-slot">
+          {/* One-shot accent aura that blooms on every track change */}
+          <AnimatePresence>
+            <motion.div
+              key={`aura-${trackKey}`}
+              className="np-aura"
+              initial={{ opacity: reduce ? 0 : 0.55, scale: 0.82 }}
+              animate={{ opacity: 0, scale: 1.55 }}
+              transition={{ duration: reduce ? 0 : 1, ease: "easeOut" }}
+            />
+          </AnimatePresence>
 
-        <div className="np-info">
-          <h1 className="np-title">{track?.title ?? "Nothing playing"}</h1>
-          <p className="np-artist text-dim">
-            {track
-              ? `${track.artist} — ${album?.title ?? track.albumTitle ?? ""}${album?.year ? ` · ${album.year}` : track.year ? ` · ${track.year}` : ""}`
-              : "Choose something from your library"}
-          </p>
-          <div className="np-format text-faint">
-            <Disc3 size={12} />
-            <span>{track ? `${track.format}${track.bitrate ? ` · ${track.bitrate} kbps` : ""}` : "—"}</span>
-          </div>
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={trackKey}
+              className={`np-art ${status === "playing" ? "np-art-playing" : ""}`}
+              style={{ background: isArtUrl(art) ? artBase : (art ?? artBase) }}
+              initial={reduce ? false : { opacity: 0, x: 46, scale: 0.94, rotate: 1.6 }}
+              animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
+              exit={reduce ? undefined : { opacity: 0, x: -46, scale: 0.94, rotate: -1.6 }}
+              transition={artTransition}
+            >
+              {isArtUrl(art) ? (
+                <ArtImage src={art} className="np-art-img" />
+              ) : (
+                <div className="np-art-orb" /> /* specular highlight only for placeholder art */
+              )}
+              {track?.lossless && (
+                <span className="np-lossless">
+                  LOSSLESS{track.sampleRate ? ` · ${(track.sampleRate / 1000).toFixed(1)}kHz` : ""}
+                  {track.bitDepth ? ` · ${track.bitDepth}-bit` : ""}
+                </span>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="np-info-slot">
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={trackKey}
+              className="np-info"
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? undefined : { opacity: 0, y: -14 }}
+              transition={infoTransition}
+            >
+              <h1 className="np-title">{track?.title ?? "Nothing playing"}</h1>
+              <p className="np-artist text-dim">
+                {track
+                  ? `${track.artist} — ${album?.title ?? track.albumTitle ?? ""}${album?.year ? ` · ${album.year}` : track.year ? ` · ${track.year}` : ""}`
+                  : "Choose something from your library"}
+              </p>
+              <div className="np-format text-faint">
+                <Disc3 size={12} />
+                <span>{track ? `${track.format}${track.bitrate ? ` · ${track.bitrate} kbps` : ""}` : "—"}</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <div className="np-seekrow">
@@ -139,7 +191,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="np-viz-picker">
-          <span className="text-faint np-viz-note">{album?.title ?? "Orb visualizer"}</span>
+          <span className="text-faint np-viz-note">{album?.title ?? "Lava lamp"}</span>
           <input
             type="range"
             min={0.2}
@@ -161,7 +213,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
             initial={{ x: 340, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 340, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            transition={{ duration: reduce ? 0 : 0.26, ease: [0.32, 0.72, 0, 1] }}
           >
             <div className="np-queue-head">
               <span>Queue · {queue.length}</span>
@@ -172,8 +224,9 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
                 const t = allTracks.find((x) => x.id === id);
                 if (!t) return null;
                 return (
-                  <button
+                  <motion.button
                     key={`${id}-${i}`}
+                    layout={!reduce}
                     className={`np-queue-row ${i === index ? "np-queue-now" : ""}`}
                     onClick={() => playQueueIndex(i)}
                   >
@@ -183,7 +236,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
                       <span className="text-faint">{t.artist}</span>
                     </div>
                     <span className="text-faint">{formatTime(t.duration)}</span>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>

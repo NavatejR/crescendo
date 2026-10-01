@@ -116,6 +116,10 @@ export const native = {
   removeFromPlaylist(playlistId: number, trackId: number) {
     return invoke("playlist_remove_track", { playlistId, trackId });
   },
+  /** Remove repeated occurrences of a track; resolves to how many were removed. */
+  dedupePlaylist(id: number): Promise<number | null> {
+    return invoke("playlist_dedupe", { id });
+  },
   /** Watch a folder and add all its tracks to a playlist; resolves to the count. */
   addFolderToPlaylist(playlistId: number, folder: string): Promise<number | null> {
     return invoke("playlist_add_folder", { playlistId, folder });

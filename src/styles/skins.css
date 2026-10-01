@@ -21,14 +21,19 @@
   --accent: #a8c8ff;
   --accent-rgb: 168 200 255;
   --accent-contrast: #0d2c5e;
+  /* Material expressive motion — emphasized decel + springy overshoot */
+  --transition-fast: 170ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-base: 300ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-spring: 520ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.22);
 }
 
 /* ---- NothingOS — monochrome, dot-matrix, geometric mono display ---- */
 [data-skin="nothing"] {
-  --font-sans: "Inter Variable", sans-serif;
-  --font-display: "Space Grotesk Variable", monospace;
-  --font-mono: "Space Grotesk Variable", monospace;
-  --tracking-display: 0.04em;
+  --font-sans: "Inter Variable", "Doto Variable", sans-serif;
+  --font-display: "Doto Variable", "Space Grotesk Variable", monospace;
+  --font-mono: "Doto Variable", ui-monospace, monospace;
+  --tracking-display: 0.08em;
   --bg: #0a0a0a;
   --bg-rgb: 10 10 10;
   --bg-elev: #111111;
@@ -43,7 +48,18 @@
   --accent-rgb: 255 255 255;
   --accent-contrast: #0a0a0a;
   --dot-color: 255 255 255;
-  --dot-strength: 0.05;
+  --dot-strength: 0.14;
+  /* NothingOS snappiness — near-instant, no float */
+  --transition-fast: 80ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-base: 140ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-spring: 210ms cubic-bezier(0.2, 0, 0, 1);
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.16);
+  --nav-active-fg: #ffffff;
+  --ripple: rgb(var(--accent-rgb) / 0.22);
+}
+/* NothingOS stays strictly outlined — never a tonal fill. */
+[data-skin="nothing"] svg {
+  fill: none;
 }
 
 /* ---- Windows 11 — Mica neutrals, Segoe-like humanist sans ---- */
@@ -121,6 +137,14 @@
 }
 [data-icon-skin="material"] svg {
   stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Material's outlined → filled selection convention. */
+[data-icon-skin="material"] .side-item-active svg,
+[data-icon-skin="material"] .icon-btn.toggled svg {
+  fill: currentColor;
+  fill-opacity: 0.3;
 }
 [data-icon-skin="liquid"] svg {
   stroke-width: 1.4;

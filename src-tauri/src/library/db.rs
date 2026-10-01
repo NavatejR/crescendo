@@ -367,6 +367,18 @@ pub fn remove_from_playlist(conn: &Connection, playlist_id: i64, track_id: i64) 
     );
 }
 
+/// Drop repeated occurrences of a track, keeping the earliest position.
+/// Returns how many rows were removed.
+pub fn dedupe_playlist(conn: &Connection, playlist_id: i64) -> usize {
+    conn.execute(
+        "DELETE FROM playlist_tracks WHERE playlist_id = ?1 AND rowid NOT IN (\
+           SELECT MIN(rowid) FROM playlist_tracks WHERE playlist_id = ?1 GROUP BY track_id\
+         )",
+        params![playlist_id],
+    )
+    .unwrap_or(0)
+}
+
 fn chrono_now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -500,6 +512,22 @@ mod tests {
         assert_eq!(track_art_path(&conn, "/m/a.flac").as_deref(), Some("/art/x.png"));
         let ids = track_ids_in_folder(&conn, "/m");
         assert_eq!(ids, vec![first]);
+    }
+
+    #[test]
+    fn playlist_dedupe_keeps_one_of_each() {
+        let conn = mem_db();
+        let a = upsert_track(&conn, &sample("/m/a.flac", "A"), 1).unwrap();
+        let b = upsert_track(&conn, &sample("/m/b.flac", "A"), 1).unwrap();
+        let pid = create_playlist(&conn, "Mix");
+        add_to_playlist(&conn, pid, a);
+        add_to_playlist(&conn, pid, b);
+        add_to_playlist(&conn, pid, a);
+        assert_eq!(dedupe_playlist(&conn, pid), 1);
+        let ids = &list_playlists(&conn)[0].track_ids;
+        assert_eq!(ids.len(), 2);
+        assert_eq!(ids[0], a);
+        assert_eq!(dedupe_playlist(&conn, pid), 0);
     }
 
     #[test]

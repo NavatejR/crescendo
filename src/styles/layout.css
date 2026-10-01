@@ -100,6 +100,8 @@
   gap: 2px;
 }
 .side-item {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -120,12 +122,24 @@
   background: var(--surface);
   color: var(--text);
 }
-.side-item-active {
-  background: var(--accent-soft);
-  color: var(--accent);
+.side-item.side-item-active {
+  background: transparent;
+  color: var(--nav-active-fg);
 }
-.side-item-active:hover {
-  background: var(--accent-soft);
+.side-item.side-item-active:hover {
+  background: transparent;
+}
+.side-item-active svg {
+  color: var(--nav-active-icon);
+}
+/* Selected indicator — a single shared element slides between items. */
+.side-indicator {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--nav-active-bg);
+  pointer-events: none;
 }
 .side-eq-live {
   margin-left: auto;
@@ -478,6 +492,57 @@
   width: 100%;
   height: 100%;
 }
+/* Crossfading backdrop stack: one lava layer per album palette. */
+.np-viz-stack {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.np-viz-layer {
+  position: absolute;
+  inset: 0;
+}
+/* Cover slot holds the entering/exiting covers plus the accent aura. */
+.np-art-slot {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+}
+/* Entering and exiting covers share one cell so they cross-fade in place. */
+.np-art-slot > * {
+  grid-area: 1 / 1;
+}
+.np-info-slot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 76px;
+}
+.np-info-slot > * {
+  grid-area: 1 / 1;
+}
+.np-aura {
+  position: absolute;
+  z-index: -1;
+  width: min(320px, 48vh);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--accent-rgb) / 0.5), transparent 68%);
+  filter: blur(22px);
+  pointer-events: none;
+}
+/* Smoothed playback progress (native position arrives in 250ms polls). */
+.np-seek-fill {
+  transition: width 180ms linear;
+}
+.np-seek-knob {
+  transition: left 180ms linear, transform var(--transition-fast);
+}
+.np-seek-knob:hover {
+  transform: scale(1.15);
+}
 .np-top {
   position: relative;
   display: flex;
@@ -562,6 +627,8 @@
 .np-info {
   text-align: center;
   max-width: 640px;
+  width: min(640px, 92%);
+  min-height: 76px;
 }
 .np-title {
   font-family: var(--font-display);
@@ -1080,6 +1147,30 @@
 }
 
 /* Playlist card controls + modals */
+.pl-art-wrap {
+  position: relative;
+}
+.pl-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+.pl-card:hover .pl-del {
+  opacity: 1;
+}
+.pl-del:hover {
+  background: rgb(0 0 0 / 0.7);
+  color: #fff;
+}
+.pl-meta {
+  font-size: 11.5px;
+}
 .pl-art {
   border: none;
   background: none;
@@ -1108,15 +1199,30 @@
   font-family: var(--font-display);
   letter-spacing: var(--tracking-display);
 }
-.pl-btns {
-  display: flex;
+/* One consistent button grid — equal cells on every card and modal. */
+.pl-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  flex-wrap: wrap;
+  margin-top: 8px;
 }
-.pl-btns .btn {
-  padding: 4px 9px;
+.pl-actions .btn {
+  padding: 6px 4px;
   font-size: 11px;
+  gap: 5px;
   margin-top: 0;
+  justify-content: center;
+}
+.pl-modal-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 18px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.pl-modal-tools .btn {
+  padding: 6px 11px;
+  font-size: 12px;
 }
 .pl-toast {
   font-size: 12px;
@@ -1156,6 +1262,11 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-height: 120px;
+}
+.pl-track-list-pick {
+  min-height: 200px;
+  max-height: 46vh;
 }
 .pl-track-row {
   display: grid;
@@ -1427,6 +1538,13 @@ input[type="range"] {
   .side-eq-live::before,
   .side-eq-live::after,
   .tn-orb {
+    animation: none !important;
+  }
+  .btn::after,
+  .icon-btn::after,
+  .chip::after,
+  .side-item::after,
+  .pl-pick-row::after {
     animation: none !important;
   }
 }

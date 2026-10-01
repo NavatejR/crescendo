@@ -36,6 +36,7 @@
   --shadow-pop: 0 20px 60px rgb(0 0 0 / 0.45);
   --sheen: none;
   --density: 1;
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.2);
 }
 
 /* ---- Brutalism — ink & bone, black offset shadows, zero blur.
@@ -55,6 +56,11 @@
   --density: 1.05;
   --tracking-display: 0.08em;
   --type-scale: 1.05;
+  /* A bold accent slab, but the label stays light — a solid fill with
+     dark ink made the selected page hard to read. */
+  --nav-active-bg: rgb(var(--accent-rgb) / 0.34);
+  --nav-active-fg: var(--text);
+  --nav-active-icon: var(--accent);
 }
 
 /* ---- Maximalism — oversized radii, dense stages, big type ---- */
@@ -73,4 +79,6 @@
   --sheen: linear-gradient(120deg, rgb(var(--accent-rgb) / 0.12), transparent 45%, rgb(var(--accent-rgb) / 0.08));
   --density: 1.18;
   --type-scale: 1.14;
+  --nav-active-bg: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.24), transparent 85%);
+  --nav-active-fg: var(--accent);
 }

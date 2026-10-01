@@ -72,6 +72,7 @@ pub fn run() {
             commands::playlist_rename,
             commands::playlist_add_track,
             commands::playlist_remove_track,
+            commands::playlist_dedupe,
             commands::playlist_add_folder,
         ])
         .run(tauri::generate_context!())

@@ -44,16 +44,32 @@ export function applyTheme(skin: SkinId, overhaul: OverhaulId, accent: string) {
   if (accent) {
     root.style.setProperty("--accent", accent);
     const n = hexToRgb(accent);
-    if (n) root.style.setProperty("--accent-rgb", `${n[0]} ${n[1]} ${n[2]}`);
+    if (n) {
+      root.style.setProperty("--accent-rgb", `${n[0]} ${n[1]} ${n[2]}`);
+      // Derive the on-accent ink so solid-accent states (e.g. the selected
+      // nav item, accent buttons) stay legible for any custom accent.
+      root.style.setProperty("--accent-contrast", contrastInk(n));
+    }
   } else {
     root.style.removeProperty("--accent");
     root.style.removeProperty("--accent-rgb");
+    root.style.removeProperty("--accent-contrast");
   }
 }
 
 export function hexToRgb(hex: string): [number, number, number] | null {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
   return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+}
+
+/** Relative-luminance check: near-black ink on light accents, white on dark. */
+function contrastInk([r, g, b]: [number, number, number]): string {
+  const lin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const l = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return l > 0.22 ? "#0a0a0a" : "#ffffff";
 }
 
 function persist(s: ThemeState) {
