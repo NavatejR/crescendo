@@ -6,6 +6,7 @@ import { useTheme } from "../theme/store";
 import { useIcon } from "../theme/iconSet";
 import type { Track } from "../lib/types";
 import type { ViewId } from "../App";
+import ArtImage from "./ArtImage";
 
 /**
  * Populated home experience: a jump-back-in shelf, artist chips, library
@@ -105,7 +106,7 @@ export default function Home({ onView }: { onView: (v: ViewId) => void }) {
                 whileHover={{ y: -4 }}
                 title={`Play ${t.title}`}
               >
-                {isArtUrl(t.art) && <img src={t.art} alt="" className="home-recent-img" draggable={false} />}
+                {isArtUrl(t.art) && <ArtImage src={t.art} className="home-recent-img" />}
                 <span className="home-recent-play"><Iplay size={13} /></span>
                 <span className="home-recent-title">{t.title}</span>
                 <span className="home-recent-artist text-dim">{t.artist}</span>
@@ -169,7 +170,7 @@ function AlbumCard({
       whileHover={{ y: -4 }}
     >
       <div className="album-art" style={{ background: artBackground(album.art, album.artPalette) }}>
-        {isArtUrl(album.art) && <img src={album.art} alt="" className="album-art-img" draggable={false} />}
+        {isArtUrl(album.art) && <ArtImage src={album.art} className="album-art-img" />}
         <button className="album-play" onClick={() => onPlay(tracks)} title={`Play ${album.title}`}>
           <Iplay size={16} style={{ marginLeft: 2 }} />
         </button>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
@@ -8,6 +8,8 @@ import { useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
 import { native } from "../lib/native";
 import { usePlayer } from "../player/store";
 import type { Album, Track } from "../lib/types";
+import ArtImage from "./ArtImage";
+import { PlaylistsView, AddToPlaylistDialog } from "./PlaylistsView";
 
 export default function Library({ view }: { view: ViewId }) {
   const { tracks, albums, ready, native: nativeMode } = useLibrary();
@@ -147,9 +149,7 @@ function AlbumsView({ albums, onPlay }: { albums: Album[]; onPlay: (t: Track[]) 
             whileHover={{ y: -4 }}
           >
             <div className="album-art" style={{ background: artBackground(al.art, al.artPalette) }}>
-              {isArtUrl(al.art) && (
-                <img src={al.art} alt="" className="album-art-img" draggable={false} />
-              )}
+              {isArtUrl(al.art) && <ArtImage src={al.art} className="album-art-img" />}
               <button className="album-play" onClick={() => onPlay(tracks)} title={`Play ${al.title}`}>
                 <IPlay size={16} style={{ marginLeft: 2 }} />
               </button>
@@ -207,6 +207,8 @@ function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], 
   const skin = useTheme((s) => s.skin);
   const IPlay = iconFor(skin, "play");
   const IClock = iconFor(skin, "clock");
+  const IAdd = iconFor(skin, "playlists");
+  const [addFor, setAddFor] = useState<string | null>(null);
 
   return (
     <div className="track-table panel">
@@ -238,12 +240,22 @@ function TracksView({ tracks, onPlay }: { tracks: Track[]; onPlay: (t: Track[], 
               {t.sampleRate ? ` · ${(t.sampleRate / 1000).toFixed(0)}/${t.bitDepth ?? "?"}` : ""}
             </span>
             <span className="tr-time text-faint">{formatTime(t.duration)}</span>
+            <button
+              className="icon-btn tr-add"
+              onClick={() => setAddFor(t.id)}
+              title="Add to playlist"
+            >
+              <IAdd size={13} />
+            </button>
             <button className="icon-btn tr-play" onClick={() => onPlay(tracks, i)} title="Play">
               <IPlay size={13} />
             </button>
           </div>
         );
       })}
+      <AnimatePresence>
+        {addFor && <AddToPlaylistDialog trackId={addFor} onClose={() => setAddFor(null)} />}
+      </AnimatePresence>
     </div>
   );
 }
@@ -315,118 +327,6 @@ function FoldersView() {
             No folders yet — add one to build your library.
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-/* ---------------- Playlists ---------------- */
-function PlaylistsView({ onPlay }: { onPlay: (t: Track[], idx?: number) => void }) {
-  const allTracks = useLibrary((s) => s.tracks);
-  const [playlists, setPlaylists] = useState<{ id: string; name: string; trackIds: string[] }[]>([]);
-  const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const loaded = useLibrary((s) => s.ready);
-  const skin = useTheme((s) => s.skin);
-  const IPlay = iconFor(skin, "play");
-  const IPlus = iconFor(skin, "plus");
-  const IListMusic = iconFor(skin, "playlists");
-
-  async function load() {
-    const pls = await native.listPlaylists();
-    if (pls) {
-      setPlaylists(
-        pls.map((p) => ({
-          id: String(p.id),
-          name: p.name,
-          trackIds: p.trackIds.map(String),
-        })),
-      );
-    }
-  }
-
-  useEffect(() => {
-    if (loaded) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
-
-  async function create() {
-    if (!name.trim()) return;
-    await native.createPlaylist(name.trim());
-    setName("");
-    setCreating(false);
-    await load();
-  }
-
-  return (
-    <div className="playlists-view">
-      <div className="pl-grid">
-        {playlists.map((pl, i) => {
-          const tracks = pl.trackIds
-            .map((id) => allTracks.find((t) => t.id === id))
-            .filter(Boolean) as Track[];
-          return (
-            <motion.div
-              key={pl.id}
-              className="pl-card panel"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ y: -3 }}
-              onDoubleClick={() => onPlay(tracks)}
-            >
-              <div className="pl-art">
-                {tracks.slice(0, 4).map((t, i) =>
-                  isArtUrl(t.art) ? (
-                    <img key={t.id} src={t.art} alt="" className="pl-art-img" draggable={false} />
-                  ) : (
-                    <div key={t.id ?? i} style={{ background: t.art ?? "var(--surface-2)" }} />
-                  ),
-                )}
-              </div>
-              <span className="pl-name">{pl.name}</span>
-              <span className="text-faint">{pl.trackIds.length} tracks</span>
-              <div className="pl-actions">
-                <button className="btn" onClick={() => onPlay(tracks)}>
-                  <IPlay size={13} /> Play
-                </button>
-                <button
-                  className="icon-btn"
-                  title="Delete playlist"
-                  onClick={async () => {
-                    await native.deletePlaylist(Number(pl.id));
-                    await load();
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
-        {creating ? (
-          <div className="pl-card panel pl-new">
-            <input
-              autoFocus
-              className="input"
-              placeholder="Playlist name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") create();
-                if (e.key === "Escape") setCreating(false);
-              }}
-            />
-          </div>
-        ) : (
-          <button className="pl-card panel pl-add" onClick={() => setCreating(true)}>
-            <IPlus size={20} />
-            <span>New playlist</span>
-          </button>
-        )}
-      </div>
-      <div className="pl-hint text-faint">
-        <IListMusic size={13} /> Double-click a playlist to play it.
       </div>
     </div>
   );

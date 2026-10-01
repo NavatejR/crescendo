@@ -84,6 +84,12 @@ export const native = {
   addFolder(path: string) {
     return invoke("library_add_folder", { path });
   },
+  importFiles(paths: string[]): Promise<number[] | null> {
+    return invoke("library_import_files", { paths });
+  },
+  repairArtwork(): Promise<number | null> {
+    return invoke("library_repair_artwork");
+  },
   removeFolder(path: string) {
     return invoke("library_remove_folder", { path });
   },
@@ -110,6 +116,10 @@ export const native = {
   removeFromPlaylist(playlistId: number, trackId: number) {
     return invoke("playlist_remove_track", { playlistId, trackId });
   },
+  /** Watch a folder and add all its tracks to a playlist; resolves to the count. */
+  addFolderToPlaylist(playlistId: number, folder: string): Promise<number | null> {
+    return invoke("playlist_add_folder", { playlistId, folder });
+  },
 
   // ---- dialog ----
   async pickFolder(): Promise<string | null> {
@@ -121,6 +131,29 @@ export const native = {
     } catch (e) {
       console.error("pickFolder failed:", e);
       return null;
+    }
+  },
+
+  /** Pick one or more audio files (used by playlist import). */
+  async pickFiles(): Promise<string[]> {
+    if (!isNative()) return [];
+    try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const sel = await open({
+        multiple: true,
+        title: "Add music files",
+        filters: [
+          {
+            name: "Audio",
+            extensions: ["mp3", "flac", "m4a", "aac", "wav", "aiff", "aif", "ogg", "opus", "alac"],
+          },
+        ],
+      });
+      if (!sel) return [];
+      return Array.isArray(sel) ? sel : [sel];
+    } catch (e) {
+      console.error("pickFiles failed:", e);
+      return [];
     }
   },
 };

@@ -8,6 +8,7 @@ import { formatTime } from "../lib/mockLibrary";
 import { useTrackById, useAlbumById, useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
 import { useUI } from "../lib/uiStore";
 import LavaGradient from "./LavaGradient";
+import ArtImage from "./ArtImage";
 
 export default function NowPlaying({ onClose }: { onClose: () => void }) {
   const [queueOpen, setQueueOpen] = useState(false);
@@ -83,7 +84,7 @@ export default function NowPlaying({ onClose }: { onClose: () => void }) {
           layout
         >
           {isArtUrl(art) ? (
-            <img src={art} alt="" className="np-art-img" draggable={false} />
+            <ArtImage src={art} className="np-art-img" />
           ) : (
             <div className="np-art-orb" /> /* specular highlight only for placeholder art */
           )}

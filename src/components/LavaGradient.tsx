@@ -2,7 +2,10 @@ import { useEffect, useRef, useMemo, type CSSProperties } from "react";
 import { spectrum } from "../lib/spectrum";
 import { parsePalette } from "../lib/libraryStore";
 
-/* Deterministic blob layout presets — same album ⇒ same lava composition. */
+/* Deterministic blob layout presets — same album ⇒ same lava composition.
+   dx/dy are the drift amplitude as a percentage of the *container*; they are
+   converted to blob-relative percentages below so both the fullscreen player
+   and the small Settings preview move by the same visible amount. */
 const BLOB_PRESETS = [
   [
     { x: 22, y: 26, s: 46, d: 26, dx: 18, dy: -14 },
@@ -23,6 +26,9 @@ const BLOB_PRESETS = [
     { x: 36, y: 22, s: 26, d: 31, dx: -14, dy: 10 },
   ],
 ] as const;
+
+/** How much faster the drift runs than the preset durations imply. */
+const DRIFT_SCALE = 0.6;
 
 function hash(s: string): number {
   let h = 0;
@@ -46,8 +52,11 @@ function glowColor(rgb: string, lift: number): string {
 
 /**
  * A slow lava-lamp gradient built from an album's cover palette.
- * Pure CSS animation (cheap, GPU-friendly), optionally coupled to the
- * live audio spectrum — blobs breathe slightly with the bass.
+ *
+ * Each blob is a drifting wrapper (pure CSS, cheap) around a core whose
+ * scale/opacity are written directly by one rAF from the live spectrum, so
+ * the lamp visibly breathes with the bass without relying on custom
+ * properties inside @keyframes (unreliable in WKWebView).
  */
 export default function LavaGradient({
   palette,
@@ -69,6 +78,7 @@ export default function LavaGradient({
   className?: string;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const coreRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const colors = useMemo(() => {
     const parsed = parsePalette(palette);
@@ -84,7 +94,7 @@ export default function LavaGradient({
 
   const preset = BLOB_PRESETS[hash((palette ?? seed) || "crescendo") % BLOB_PRESETS.length];
 
-  // Gentle audio coupling: one rAF, writes CSS vars only.
+  // Gentle audio coupling: one rAF, writes inline transform/opacity only.
   useEffect(() => {
     let raf = 0;
     let amp = 0;
@@ -92,47 +102,90 @@ export default function LavaGradient({
     const loop = (now: number) => {
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016;
       last = now;
-      const target = active && spectrum.playing ? Math.min(1, spectrum.bass * 1.1 + spectrum.energy * 0.35) : 0;
+      const target =
+        active && spectrum.playing ? Math.min(1, spectrum.bass * 1.1 + spectrum.energy * 0.35) : 0;
       amp += (target - amp) * (1 - Math.exp(-dt * (target > amp ? 14 : 3.5)));
-      rootRef.current?.style.setProperty("--lava-amp", amp.toFixed(3));
+      const cores = coreRefs.current;
+      for (let i = 0; i < cores.length; i++) {
+        const el = cores[i];
+        if (!el) continue;
+        el.style.transform = `scale(${(0.9 + amp * 0.34).toFixed(3)})`;
+        el.style.opacity = (0.62 + amp * 0.34).toFixed(3);
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [active]);
 
-  const blobColors = colors.length >= 3
-    ? [glowColor(colors[1], 0.25), glowColor(colors[0], 0.4), glowColor(colors[2] ?? colors[0], 0.2), glowColor(colors[colors.length - 1], 0.45)]
-    : [];
+  const blobColors =
+    colors.length >= 3
+      ? [
+          glowColor(colors[1], 0.25),
+          glowColor(colors[0], 0.4),
+          glowColor(colors[2] ?? colors[0], 0.2),
+          glowColor(colors[colors.length - 1], 0.45),
+        ]
+      : [];
+
+  const speed = Math.max(0.35, Math.min(1.5, intensity));
+  const map = blobColors.map((c, i) => {
+    const p = preset[i % preset.length];
+    // Convert the container-relative amplitude into a blob-relative
+    // percentage, since transform % resolves against the element's own size.
+    const dx = ((p.dx * 100) / p.s).toFixed(1);
+    const dy = ((p.dy * 100) / p.s).toFixed(1);
+    return { c, p, dx, dy };
+  });
 
   return (
     <div
       ref={rootRef}
       className={`lava ${className}`}
-      style={{ ...(base ? { background: base } : null), "--lava-speed": String(1 / Math.max(0.35, intensity)) } as CSSProperties}
+      style={
+        {
+          ...(base ? { background: base } : null),
+          "--lava-speed": String(speed),
+        } as CSSProperties
+      }
       aria-hidden
     >
-      {blobColors.map((c, i) => {
-        const p = preset[i % preset.length];
-        return (
-          <div
-            key={i}
-            className="lava-blob"
-            style={{
-              background: `radial-gradient(closest-side, ${c}, transparent 72%)`,
+      {map.map(({ c, p, dx, dy }, i) => (
+        <div
+          key={i}
+          className="lava-blob"
+          style={
+            {
               left: `${p.x}%`,
               top: `${p.y}%`,
               width: `${p.s}%`,
               paddingBottom: `${p.s}%`,
-              animationDuration: `${p.d}s`,
-              animationDelay: `${-p.d / 3}s`,
-              ["--dx" as string]: `${p.dx}%`,
-              ["--dy" as string]: `${p.dy}%`,
+              animationDuration: `${((p.d * DRIFT_SCALE) / speed).toFixed(1)}s`,
+              animationDelay: `${(-(p.d * DRIFT_SCALE) / 3).toFixed(1)}s`,
+              ["--dx" as string]: `${dx}%`,
+              ["--dy" as string]: `${dy}%`,
+            } as CSSProperties
+          }
+        >
+          <div
+            ref={(el) => {
+              coreRefs.current[i] = el;
             }}
+            className="lava-blob-core"
+            style={{ background: `radial-gradient(closest-side, ${c}, transparent 72%)` }}
           />
-        );
-      })}
-      {colors.length === 0 && <div className="lava-blob lava-blob-fallback" />}
+        </div>
+      ))}
+      {colors.length === 0 && (
+        <div className="lava-blob lava-blob-fallback">
+          <div
+            ref={(el) => {
+              coreRefs.current[0] = el;
+            }}
+            className="lava-blob-core"
+          />
+        </div>
+      )}
       {shade && <div className="lava-shade" />}
     </div>
   );

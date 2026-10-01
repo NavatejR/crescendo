@@ -5,6 +5,7 @@ import { useTrackById, useAlbumById, isArtUrl, artBackground } from "../lib/libr
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
 import MiniOrb from "./MiniOrb";
+import ArtImage from "./ArtImage";
 
 export default function Playbar({
   onExpand,
@@ -58,7 +59,7 @@ export default function Playbar({
           onClick={onExpand}
           role="button"
         >
-          {isArtUrl(art) && <img src={art} alt="" className="pb-art-img" draggable={false} />}
+          {isArtUrl(art) && <ArtImage src={art} className="pb-art-img" />}
           {status === "playing" && <div className="pb-art-sheen" />}
         </div>
         <div className="pb-meta">

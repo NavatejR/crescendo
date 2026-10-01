@@ -167,6 +167,70 @@ pub fn rescan_folders_silent(app: AppHandle, folders: Vec<String>) {
     }
 }
 
+/// Import explicit files (outside any watched folder) into the library.
+/// Returns the stored track ids so callers can add them to a playlist.
+#[tauri::command]
+pub fn library_import_files(db: State<'_, DbState>, paths: Vec<String>) -> Vec<i64> {
+    let art = art_dir();
+    let conn = db.0.lock();
+    let mut ids = Vec::new();
+    for path in paths {
+        let p = std::path::Path::new(&path);
+        let ext = p
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_ascii_lowercase())
+            .unwrap_or_default();
+        if !p.is_file() || !crate::library::scanner::AUDIO_EXTS.contains(&ext.as_str()) {
+            continue;
+        }
+        let mtime = std::fs::metadata(p)
+            .and_then(|m| m.modified())
+            .ok()
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+        if let Ok(mut t) = crate::library::metadata::extract(&path) {
+            if let Ok((a, pal)) = crate::library::metadata::extract_artwork(&path, &art) {
+                t.art_path = Some(a);
+                t.art_palette = Some(pal);
+            }
+            if db::upsert_track(&conn, &t, mtime).is_ok() {
+                if let Some(id) = db::track_id_by_path(&conn, &path) {
+                    ids.push(id);
+                }
+            }
+        }
+    }
+    ids
+}
+
+/// Re-extract artwork for every track whose cached PNG has vanished.
+/// Returns the number of repaired covers.
+pub fn repair_artwork(db: &DbState) -> usize {
+    let art = art_dir();
+    let conn = db.0.lock();
+    let mut repaired = 0;
+    for t in db::list_tracks(&conn) {
+        let missing = match &t.art_path {
+            Some(p) => !std::path::Path::new(p).exists(),
+            None => false,
+        };
+        if missing {
+            if let Ok((a, pal)) = crate::library::metadata::extract_artwork(&t.path, &art) {
+                db::set_track_art(&conn, &t.path, &a, &pal);
+                repaired += 1;
+            }
+        }
+    }
+    repaired
+}
+
+#[tauri::command]
+pub fn library_repair_artwork(db: State<'_, DbState>) -> usize {
+    repair_artwork(&db)
+}
+
 /// Run a scan on a background thread, emitting progress events.
 fn scan_folder_async(app: AppHandle, folder: String, with_progress: bool) {
     std::thread::spawn(move || {
@@ -237,4 +301,39 @@ pub fn playlist_add_track(db: State<'_, DbState>, playlist_id: i64, track_id: i6
 pub fn playlist_remove_track(db: State<'_, DbState>, playlist_id: i64, track_id: i64) {
     let conn = db.0.lock();
     db::remove_from_playlist(&conn, playlist_id, track_id);
+}
+
+/// Watch a folder and add every track inside it to a playlist. Scans
+/// synchronously (off the main thread) so the returned count is accurate.
+#[tauri::command]
+pub async fn playlist_add_folder(
+    app: AppHandle,
+    playlist_id: i64,
+    folder: String,
+) -> Result<usize, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = Connection::open(data_db_path()).map_err(|e| e.to_string())?;
+        db::add_folder(&conn, &folder);
+        let cancelled = std::sync::atomic::AtomicBool::new(false);
+        let art = art_dir();
+        let progress_app = app.clone();
+        crate::library::scanner::scan_folder(
+            &conn,
+            &folder,
+            &art,
+            |done, total| {
+                let _ = progress_app.emit("scan:progress", (done, total));
+            },
+            &cancelled,
+        )?;
+        let ids = db::track_ids_in_folder(&conn, &folder);
+        let n = ids.len();
+        for id in ids {
+            db::add_to_playlist(&conn, playlist_id, id);
+        }
+        let _ = app.emit("scan:done", ());
+        Ok::<usize, String>(n)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }

@@ -26,10 +26,14 @@ pub fn run() {
             .expect("failed to initialize audio engine");
             app.manage(engine);
 
-            // Start watching known library folders (quick rescan of changed files)
+            // Heal vanished artwork, then watch known folders for changes.
             let h = app.handle().clone();
             std::thread::spawn(move || {
                 if let Some(db) = h.try_state::<DbState>() {
+                    let repaired = crate::commands::repair_artwork(&db);
+                    if repaired > 0 {
+                        let _ = h.emit("scan:done", ());
+                    }
                     let folders = {
                         let conn = db.0.lock();
                         library::db::list_folders(&conn)
@@ -60,12 +64,15 @@ pub fn run() {
             commands::library_remove_folder,
             commands::library_rescan_all,
             commands::library_tracks_of_album,
+            commands::library_import_files,
+            commands::library_repair_artwork,
             commands::playlist_list,
             commands::playlist_create,
             commands::playlist_delete,
             commands::playlist_rename,
             commands::playlist_add_track,
             commands::playlist_remove_track,
+            commands::playlist_add_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

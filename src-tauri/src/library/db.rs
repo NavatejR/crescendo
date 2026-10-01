@@ -206,6 +206,51 @@ pub fn track_mtime(conn: &Connection, path: &str) -> Option<i64> {
         .flatten()
 }
 
+/// The cached artwork path for a track, if one was extracted.
+pub fn track_art_path(conn: &Connection, path: &str) -> Option<String> {
+    conn.query_row(
+        "SELECT art_path FROM tracks WHERE path = ?1",
+        params![path],
+        |r| r.get::<_, Option<String>>(0),
+    )
+    .optional()
+    .ok()
+    .flatten()
+    .flatten()
+}
+
+/// Update only the cached artwork columns (used by the art self-heal pass).
+pub fn set_track_art(conn: &Connection, path: &str, art: &str, palette: &str) {
+    let _ = conn.execute(
+        "UPDATE tracks SET art_path = ?2, art_palette = ?3 WHERE path = ?1",
+        params![path, art, palette],
+    );
+}
+
+/// Resolve a track id by file path. Prefer this over `upsert_track`'s
+/// return value, which is the last *insert* rowid and is stale when the
+/// row already existed and was only updated.
+pub fn track_id_by_path(conn: &Connection, path: &str) -> Option<i64> {
+    conn.query_row("SELECT id FROM tracks WHERE path = ?1", params![path], |r| r.get(0))
+        .optional()
+        .ok()
+        .flatten()
+}
+
+/// Ids of every track stored under a folder path (in path order).
+pub fn track_ids_in_folder(conn: &Connection, folder: &str) -> Vec<i64> {
+    let mut stmt = match conn.prepare("SELECT id FROM tracks WHERE path LIKE ?1 ORDER BY path") {
+        Ok(s) => s,
+        Err(_) => return vec![],
+    };
+    let pattern = format!("{folder}%");
+    let ids = match stmt.query_map(params![pattern], |r| r.get(0)) {
+        Ok(it) => it.filter_map(|x| x.ok()).collect(),
+        Err(_) => vec![],
+    };
+    ids
+}
+
 pub fn remove_missing(conn: &Connection, folder: &str, keep: &[String]) -> usize {
     let mut removed = 0;
     let mut stmt = match conn.prepare("SELECT id, path FROM tracks WHERE path LIKE ?1") {
@@ -441,6 +486,20 @@ mod tests {
         assert!(list_playlists(&conn)[0].track_ids.is_empty());
         delete_playlist(&conn, pid);
         assert!(list_playlists(&conn).is_empty());
+    }
+
+    #[test]
+    fn track_id_by_path_matches_after_conflict_update() {
+        let conn = mem_db();
+        upsert_track(&conn, &sample("/m/a.flac", "A"), 1).unwrap();
+        let first = track_id_by_path(&conn, "/m/a.flac").unwrap();
+        // Updating the same row must not report a phantom new id.
+        upsert_track(&conn, &sample("/m/a.flac", "A"), 2).unwrap();
+        assert_eq!(track_id_by_path(&conn, "/m/a.flac"), Some(first));
+        set_track_art(&conn, "/m/a.flac", "/art/x.png", "1,2,3");
+        assert_eq!(track_art_path(&conn, "/m/a.flac").as_deref(), Some("/art/x.png"));
+        let ids = track_ids_in_folder(&conn, "/m");
+        assert_eq!(ids, vec![first]);
     }
 
     #[test]

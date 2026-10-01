@@ -20,6 +20,15 @@ pub struct ScanResult {
     pub total: usize,
 }
 
+/// True when the DB has an artwork path whose file no longer exists
+/// (e.g. the OS cleared the cache directory).
+fn art_file_missing(conn: &Connection, path: &str) -> bool {
+    match db::track_art_path(conn, path) {
+        Some(p) => !Path::new(&p).exists(),
+        None => false,
+    }
+}
+
 fn is_audio(p: &Path) -> bool {
     p.extension()
         .and_then(|e| e.to_str())
@@ -67,8 +76,14 @@ pub fn scan_folder(
             .map(|d| d.as_secs() as i64)
             .unwrap_or(0);
 
-        // incremental: skip unchanged files
+        // incremental: skip unchanged files — but heal vanished artwork so
+        // covers don't silently break after a cache clear.
         if db::track_mtime(conn, path) == Some(mtime) {
+            if art_file_missing(conn, path) {
+                if let Ok((art, pal)) = metadata::extract_artwork(path, art_dir) {
+                    db::set_track_art(conn, path, &art, &pal);
+                }
+            }
             progress(i + 1, total);
             continue;
         }
