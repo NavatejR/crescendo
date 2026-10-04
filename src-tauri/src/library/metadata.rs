@@ -162,7 +162,7 @@ pub fn extract_artwork(path: &str, art_dir: &Path) -> Result<(String, String), S
         *buckets.entry(key).or_insert(0) += 1;
     }
     let mut counts: Vec<([u8; 3], u32)> = buckets.into_iter().collect();
-    counts.sort_by(|a, b| b.1.cmp(&a.1));
+    counts.sort_by_key(|a| std::cmp::Reverse(a.1));
     let palette: Vec<String> = counts
         .iter()
         .take(5)

@@ -224,9 +224,6 @@
 [data-overhaul="minimal"] .sidebar-foot {
   display: none;
 }
-[data-overhaul="minimal"] .app-main {
-  padding: 4px 34px 32px;
-}
 [data-overhaul="minimal"] .lib-head h1,
 [data-overhaul="minimal"] .home-head h1 {
   font-weight: 500;
@@ -400,9 +397,6 @@
 [data-overhaul="glass"] .sidebar-foot {
   display: none;
 }
-[data-overhaul="glass"] .app-main {
-  padding: 8px 32px 34px;
-}
 [data-overhaul="glass"] .album-card {
   background: rgb(var(--surface-rgb) / 0.055);
   border: var(--border-w) solid rgb(var(--outline) / 0.12);
@@ -488,9 +482,6 @@
    ========================================================================== */
 [data-overhaul="brutal"] .app-body {
   grid-template-columns: 236px 1fr;
-}
-[data-overhaul="brutal"] .app-main {
-  padding: 18px 42px 48px;
 }
 [data-overhaul="brutal"] .sidebar {
   padding: 18px 14px;
@@ -734,9 +725,6 @@
 [data-overhaul="maximal"] .sidebar-foot-dots {
   height: 64px;
   border-radius: var(--radius-m);
-}
-[data-overhaul="maximal"] .app-main {
-  padding: 8px 32px 36px;
 }
 [data-overhaul="maximal"] .home-head h1,
 [data-overhaul="maximal"] .lib-head h1 {

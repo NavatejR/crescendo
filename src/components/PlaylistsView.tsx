@@ -18,6 +18,10 @@ export function PlaylistsView({ onOpen }: { onOpen: (pl: PlaylistRow) => void })
   const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+  // Two-step delete: first click arms, second confirms. Prevents a stray click
+  // from wiping a playlist, and gives the button a visible "confirm" state.
+  const [arming, setArming] = useState<string | null>(null);
+  const [delErr, setDelErr] = useState("");
 
   const skin = useTheme((s) => s.skin);
   const IPlay = iconFor(skin, "play");
@@ -33,6 +37,14 @@ export function PlaylistsView({ onOpen }: { onOpen: (pl: PlaylistRow) => void })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
+  // Disarm a pending delete after a moment so an accidental second click
+  // somewhere else can't be mistaken for confirmation.
+  useEffect(() => {
+    if (!arming) return;
+    const t = setTimeout(() => setArming(null), 3200);
+    return () => clearTimeout(t);
+  }, [arming]);
+
   const tracksOf = (pl: PlaylistRow) =>
     pl.trackIds.map((id) => allTracks.find((t) => t.id === id)).filter(Boolean) as Track[];
 
@@ -41,6 +53,21 @@ export function PlaylistsView({ onOpen }: { onOpen: (pl: PlaylistRow) => void })
     await native.createPlaylist(name.trim());
     setName("");
     setCreating(false);
+    await load();
+  }
+
+  async function requestDelete(pl: PlaylistRow) {
+    if (arming !== pl.id) {
+      setDelErr("");
+      setArming(pl.id);
+      return;
+    }
+    setArming(null);
+    try {
+      await native.deletePlaylist(Number(pl.id));
+    } catch {
+      setDelErr(`Couldn't delete “${pl.name}”.`);
+    }
     await load();
   }
 
@@ -75,12 +102,9 @@ export function PlaylistsView({ onOpen }: { onOpen: (pl: PlaylistRow) => void })
                     <IPlay size={17} style={{ marginLeft: 2 }} />
                   </button>
                   <button
-                    className="icon-btn pl-del"
-                    title="Delete playlist"
-                    onClick={async () => {
-                      await native.deletePlaylist(Number(pl.id));
-                      await load();
-                    }}
+                    className={`icon-btn pl-del ${arming === pl.id ? "pl-del-armed" : ""}`}
+                    title={arming === pl.id ? "Click again to delete" : "Delete playlist"}
+                    onClick={() => requestDelete(pl)}
                   >
                     <IClose size={14} />
                   </button>
@@ -134,6 +158,7 @@ export function PlaylistsView({ onOpen }: { onOpen: (pl: PlaylistRow) => void })
       <div className="pl-hint text-faint">
         <IListMusic size={13} /> Open a playlist to add tracks, import files or pull in a folder.
       </div>
+      {delErr && <div className="pl-err">{delErr}</div>}
     </div>
   );
 }

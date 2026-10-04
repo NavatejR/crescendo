@@ -135,13 +135,12 @@ pub fn list_tracks(conn: &Connection) -> Vec<Track> {
 }
 
 pub fn list_albums(conn: &Connection) -> Vec<Album> {
-    let sql = format!(
+    let sql =
         "SELECT album, album_artist, MAX(year), COUNT(*), SUM(duration), \
                 (SELECT t2.art_path FROM tracks t2 WHERE t2.album = t.album AND t2.album_artist = t.album_artist AND t2.art_path IS NOT NULL LIMIT 1), \
                 (SELECT t3.art_palette FROM tracks t3 WHERE t3.album = t.album AND t3.album_artist = t.album_artist AND t3.art_palette IS NOT NULL LIMIT 1) \
-         FROM tracks t GROUP BY album, album_artist ORDER BY album_artist, year, album"
-    );
-    let mut stmt = match conn.prepare(&sql) {
+         FROM tracks t GROUP BY album, album_artist ORDER BY album_artist, year, album";
+    let mut stmt = match conn.prepare(sql) {
         Ok(s) => s,
         Err(_) => return vec![],
     };
@@ -265,10 +264,10 @@ pub fn remove_missing(conn: &Connection, folder: &str, keep: &[String]) -> usize
         Err(_) => return 0,
     };
     for (id, path) in rows {
-        if !keep.iter().any(|k| *k == path) {
-            if conn.execute("DELETE FROM tracks WHERE id = ?1", params![id]).is_ok() {
-                removed += 1;
-            }
+        if !keep.contains(&path)
+            && conn.execute("DELETE FROM tracks WHERE id = ?1", params![id]).is_ok()
+        {
+            removed += 1;
         }
     }
     removed

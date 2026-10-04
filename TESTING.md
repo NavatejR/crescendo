@@ -17,6 +17,13 @@ playback, theming, or the visualizer.
 - [ ] Adding a second folder merges libraries; removing a folder removes its tracks
 - [ ] Adding/removing a file in a watched folder is picked up on rescan
 
+## Playlists
+- [ ] Grid: create a playlist, open it, and delete it (first click arms ✕, second confirms)
+- [ ] Playlist page: Delete arms → “Confirm delete” → returns to the grid; failure shows a notice
+- [ ] Hero shows a soft cover-palette glow that dissolves into the page — no hard dark block; content lines up with the page edges in every overhaul
+- [ ] Add tracks / Files / Folder / Clean up work; per-row Remove removes the track
+- [ ] Empty playlist: play/shuffle disabled with a clear empty state
+
 ## Playback (the core)
 - [ ] Double-click plays a FLAC **and** an MP3 — sound on both
 - [ ] Play/pause (button + spacebar), next, previous (restart-if->3s rule)
@@ -39,7 +46,7 @@ playback, theming, or the visualizer.
 - [ ] No GPU console errors in dev tools; recovery works after resize
 
 ## Theming
-- [ ] All 5 overhauls × 5 skins render coherently (spot-check brutalism × liquid, maximalism × oneui)
+- [ ] All 4 overhauls × 5 skins render coherently (spot-check brutalism × liquid, maximalism × oneui)
 - [ ] Thumbnails in Settings match the live UI they represent
 - [ ] Accent override applies immediately (playbar, seek bar, orb)
 - [ ] Theme choice persists across app restarts

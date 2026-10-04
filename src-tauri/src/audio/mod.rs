@@ -122,7 +122,7 @@ where
 
         // Hot-swap EQ coefficients when settings change (checked every 256 samples).
         self.sample_count += 1;
-        if self.sample_count % 256 == 0 {
+        if self.sample_count.is_multiple_of(256) {
             let (settings, ver) = self.eq.snapshot();
             if ver != self.eq_ver {
                 self.eq_ver = ver;
@@ -190,7 +190,7 @@ impl AudioEngine {
         F: Fn(SpectrumPayload) + Send + 'static,
     {
         let device = DeviceSinkBuilder::open_default_sink().map_err(|e| e.to_string())?;
-        let player = Player::connect_new(&device.mixer());
+        let player = Player::connect_new(device.mixer());
         player.pause(); // silent until something plays
 
         let rb = HeapRb::<f32>::new(RING_CAP);

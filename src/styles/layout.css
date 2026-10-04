@@ -25,7 +25,7 @@
 .app-main {
   overflow-y: auto;
   min-width: 0;
-  padding: 6px 22px 28px;
+  padding: var(--main-pad-y) var(--main-pad-x) var(--main-pad-b);
 }
 /* Wrapper for the animated view transition (App.tsx). */
 .view-shell {
@@ -1149,6 +1149,10 @@
   gap: 6px;
   font-size: 12px;
 }
+.pl-err {
+  font-size: 12px;
+  color: var(--danger);
+}
 
 /* Playlist card controls + modals */
 .pl-art-wrap {
@@ -1195,15 +1199,25 @@
 }
 .plp-hero {
   position: relative;
-  margin: -6px -22px 0;
-  padding: 26px 26px 24px;
+  /* Bleed out by exactly the main column's inset so the hero always meets
+     the shell edges — per-overhaul padding comes from the same tokens. */
+  margin: calc(-1 * var(--main-pad-y)) calc(-1 * var(--main-pad-x)) 0;
+  padding: 26px var(--main-pad-x) 24px;
   border-radius: 0 0 var(--radius-l) var(--radius-l);
   overflow: hidden;
 }
 .plp-hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(var(--bg-rgb) / 0.25), rgb(var(--bg-rgb) / 0.86) 78%, var(--bg));
+  /* Tint the wash for the title, then dissolve to nothing at the bottom so
+     the hero never reads as a hard-edged box against the page. */
+  background: linear-gradient(
+    180deg,
+    rgb(var(--bg-rgb) / 0.16) 0%,
+    rgb(var(--bg-rgb) / 0.34) 42%,
+    rgb(var(--bg-rgb) / 0.6) 76%,
+    rgb(var(--bg-rgb) / 0) 100%
+  );
   pointer-events: none;
 }
 .plp-back {
@@ -1296,6 +1310,12 @@
   font-size: 12px;
   margin-left: 4px;
 }
+/* Destructive action: first click arms, second confirms. */
+.plp-del-btn.plp-del-btn-armed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
 .plp-table {
   display: flex;
   flex-direction: column;
@@ -1323,7 +1343,10 @@
   padding-bottom: 8px;
   position: sticky;
   top: 0;
-  background: var(--bg);
+  /* Translucent so rows scrolling underneath don't sit against an opaque
+     strip that contradicts the shell's gradient background. */
+  background: rgb(var(--bg-rgb) / 0.85);
+  backdrop-filter: blur(14px) saturate(1.4);
   z-index: 3;
 }
 .plp-row-current {
@@ -1424,8 +1447,6 @@
   background: none !important;
   border-bottom: var(--border-w) solid var(--border);
   border-radius: 0;
-  padding-inline: 2px;
-  margin-inline: 0;
 }
 [data-overhaul="minimal"] .plp-hero-scrim {
   display: none;
@@ -1455,27 +1476,36 @@
 }
 [data-overhaul="glass"] .plp-hero {
   border-radius: var(--radius-l);
-  margin: -6px -22px 0;
 }
 [data-overhaul="glass"] .plp-cover {
   backdrop-filter: blur(10px);
 }
-.pl-del {
+/* Scoped past `.icon-btn` (app.css loads after this file and would otherwise
+   clobber the chip's background/color back to transparent — leaving an
+   invisible delete target over album art). */
+.pl-card .pl-del {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 28px;
-  height: 28px;
-  background: rgb(0 0 0 / 0.45);
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  background: rgb(0 0 0 / 0.55);
   color: #fff;
   opacity: 0;
-  transition: opacity var(--transition-fast), background var(--transition-fast);
+  transition: opacity var(--transition-fast), background var(--transition-fast),
+    color var(--transition-fast);
 }
-.pl-card:hover .pl-del {
+.pl-card:hover .pl-del,
+.pl-card:focus-within .pl-del {
   opacity: 1;
 }
-.pl-del:hover {
-  background: rgb(0 0 0 / 0.7);
+.pl-card .pl-del:hover {
+  background: rgb(0 0 0 / 0.8);
+  color: #fff;
+}
+.pl-card .pl-del.pl-del-armed {
+  opacity: 1;
+  background: var(--danger);
   color: #fff;
 }
 .pl-meta {

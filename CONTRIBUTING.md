@@ -36,8 +36,8 @@ src-tauri/    Rust core (audio engine, library, DB, commands)
 
 ## Before opening a PR
 ```bash
-npx tsc --noEmit       # type-check the frontend
-cd src-tauri && cargo test && cargo clippy
+npm run typecheck      # type-check the frontend
+cd src-tauri && cargo test && cargo clippy -- -D warnings
 ```
 
 Run through the manual checklist in [TESTING.md](TESTING.md) for anything user-facing.

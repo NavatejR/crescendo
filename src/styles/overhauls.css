@@ -21,6 +21,9 @@
   --sheen: none;
   --density: 0.94;
   --type-scale: 0.98;
+  --main-pad-x: 34px;
+  --main-pad-y: 4px;
+  --main-pad-b: 32px;
   /* Quiet, precise motion */
   --transition-fast: 130ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 240ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -43,6 +46,9 @@
   --shadow-pop: 0 26px 70px rgb(0 0 0 / 0.5);
   --sheen: none;
   --density: 1.02;
+  --main-pad-x: 32px;
+  --main-pad-y: 8px;
+  --main-pad-b: 34px;
   --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 320ms cubic-bezier(0.16, 1, 0.3, 1);
   --nav-active-bg: rgb(var(--accent-rgb) / 0.2);
@@ -66,6 +72,9 @@
   --density: 1.06;
   --tracking-display: 0.07em;
   --type-scale: 1.08;
+  --main-pad-x: 42px;
+  --main-pad-y: 18px;
+  --main-pad-b: 48px;
   /* Instant, mechanical */
   --transition-fast: 110ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 200ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -90,6 +99,9 @@
   --sheen: linear-gradient(120deg, rgb(var(--accent-rgb) / 0.12), transparent 45%, rgb(var(--accent-rgb) / 0.08));
   --density: 1.2;
   --type-scale: 1.16;
+  --main-pad-x: 32px;
+  --main-pad-y: 8px;
+  --main-pad-b: 36px;
   --transition-fast: 200ms cubic-bezier(0.34, 1.32, 0.64, 1);
   --transition-base: 360ms cubic-bezier(0.34, 1.32, 0.64, 1);
   --nav-active-bg: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.26), transparent 88%);

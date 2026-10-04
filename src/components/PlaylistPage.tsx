@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../theme/store";
 import { iconFor } from "../theme/iconSet";
-import { useLibrary, isArtUrl, artBackground } from "../lib/libraryStore";
+import { useLibrary, isArtUrl } from "../lib/libraryStore";
 import { native } from "../lib/native";
 import { formatTime } from "../lib/mockLibrary";
 import { usePlayer } from "../player/store";
@@ -29,6 +29,27 @@ export function formatTotal(secs: number): string {
   const h = Math.floor(secs / 3600);
   const m = Math.round((secs % 3600) / 60);
   return h > 0 ? `${h} hr ${m} min` : `${m} min`;
+}
+
+/**
+ * Brightest swatch of a raw "r,g,b|r,g,b|…" palette, as an "r g b" triple,
+ * picked by perceived luminance. The hero glow should read as light — a full
+ * palette gradient is usually dominated by its dark last swatch, which is
+ * exactly what made the hero look like a black box.
+ */
+function brightestSwatch(palette: string | undefined): string | null {
+  let best: string | null = null;
+  let bestLum = -1;
+  for (const entry of (palette ?? "").split("|")) {
+    const [r, g, b] = entry.split(",").map((n) => parseInt(n, 10));
+    if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) continue;
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    if (lum > bestLum) {
+      bestLum = lum;
+      best = `${r} ${g} ${b}`;
+    }
+  }
+  return best;
 }
 
 /** 2×2 mosaic of the first tracks' artwork. */
@@ -78,6 +99,8 @@ export default function PlaylistPage({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Two-step delete: first click arms, second confirms.
+  const [delArmed, setDelArmed] = useState(false);
 
   const skin = useTheme((s) => s.skin);
   const I = {
@@ -99,10 +122,13 @@ export default function PlaylistPage({
 
   const total = tracks.reduce((s, t) => s + (t.duration ?? 0), 0);
   const palette = tracks.find((t) => t.artPalette)?.artPalette;
-  // Hero wash: the playlist's own palette, falling back to the shared art helper.
-  const heroWash = palette
-    ? artBackground(undefined, palette)
-    : artBackground(tracks[0]?.art, tracks[0]?.artPalette);
+  const glow = brightestSwatch(palette);
+  // A light, top-left glow over the page that fades to nothing at the edges —
+  // never a dark slab. Empty playlist? Quiet accent glow so the hero still
+  // belongs to the theme.
+  const heroWash = glow
+    ? `radial-gradient(72% 104% at 9% -4%, rgb(${glow} / 0.52), transparent 63%)`
+    : `radial-gradient(66% 96% at 9% -4%, rgb(var(--accent-rgb) / 0.16), transparent 66%)`;
 
   async function addTrackIds(ids: string[]) {
     for (const id of ids) await native.addToPlaylist(Number(playlist.id), Number(id));
@@ -146,11 +172,33 @@ export default function PlaylistPage({
     setNotice(removed ? `Removed ${removed} duplicate${removed === 1 ? "" : "s"}` : "No duplicates found");
   }
 
+  async function deletePlaylist() {
+    if (!delArmed) {
+      setDelArmed(true);
+      return;
+    }
+    setDelArmed(false);
+    try {
+      await native.deletePlaylist(Number(playlist.id));
+      // Library's load effect notices the playlist is gone and falls back to the grid.
+      onChanged();
+    } catch {
+      setNotice("Couldn't delete this playlist");
+    }
+  }
+
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(""), 2600);
     return () => clearTimeout(t);
   }, [notice]);
+
+  // Auto-disarm the pending delete so a later stray click can't confirm it.
+  useEffect(() => {
+    if (!delArmed) return;
+    const t = setTimeout(() => setDelArmed(false), 3200);
+    return () => clearTimeout(t);
+  }, [delArmed]);
 
   return (
     <div className="plp">
@@ -198,6 +246,13 @@ export default function PlaylistPage({
         </button>
         <button className="btn" onClick={dedupe} disabled={!tracks.length}>
           Clean up
+        </button>
+        <button
+          className={`btn plp-del-btn ${delArmed ? "plp-del-btn-armed" : ""}`}
+          onClick={deletePlaylist}
+          title="Delete this playlist"
+        >
+          <I.close size={14} /> {delArmed ? "Confirm delete" : "Delete"}
         </button>
         {notice && <span className="plp-notice text-faint">{notice}</span>}
       </div>

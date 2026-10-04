@@ -25,15 +25,22 @@ Most players make you choose between *pretty* and *powerful*. Crescendo is a nat
 
 **Two-axis theming** means you pick a **structure** and an **identity**, independently:
 
-| Overhauls (structure & feel) | Skins (colors & typography) |
-|---|---|
-| Minimalist — hairlines, quiet surfaces | **Material You** — dynamic tonal, Roboto Flex |
-| Glassmorphism — frosted panels, soft glow | **NothingOS** — monochrome dot-matrix, Space Grotesk |
-| Liquid Glass — specular Apple-style translucency | **Windows 11** — Mica neutrals, Fluent |
-| Brutalism — raw borders, hard offset shadows | **One UI** — deep black, electric blue |
-| Maximalism — oversized radii, big type | **Liquid Glass** — chromatic translucent |
+**Overhauls (structure & feel)** — pick one:
 
-That's **25 coherent looks** out of the box — any overhaul × any skin — plus 10 accent overrides. Theme previews in Settings are rendered live from the actual theme tokens, so what you see is what you get.
+- **Minimalism** — hairlines, quiet surfaces, icon rail
+- **Glassmorphism** — frosted panels, soft glow, floating pill rail
+- **Brutalism** — raw borders, hard offset shadows, exposed grid
+- **Maximalism** — oversized radii, big type, featured hero cards
+
+**Skins (colors & typography)** — pick one:
+
+- **Material You** — dynamic tonal, Roboto Flex
+- **NothingOS** — monochrome dot-matrix, Space Grotesk
+- **Windows 11** — Mica neutrals, Fluent
+- **One UI** — deep black, electric blue
+- **Liquid Glass** — chromatic translucent
+
+That's **20 coherent looks** out of the box — any overhaul × any skin — plus 9 accent overrides. Theme previews in Settings are rendered live from the actual theme tokens, so what you see is what you get.
 
 ## 🎵 Audio
 
